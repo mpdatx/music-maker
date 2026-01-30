@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onDestroy } from 'svelte';
   import { project, tracks, loops, playback, isPlaying } from '../lib/stores';
   import { initAudio, transport, instrumentManager, loopScheduler } from '../lib/audio';
   import { generateLoop, GENRE_PRESETS } from '../lib/generators';
@@ -7,19 +7,23 @@
   import TrackRow from './TrackRow.svelte';
 
   let audioInitialized = false;
-  let cellStates: Map<string, Map<number, LoopState>> = new Map();
 
-  // Initialize cell states for each track
-  $: {
-    for (const track of $tracks) {
-      if (!cellStates.has(track.id)) {
-        cellStates.set(track.id, new Map());
-      }
-    }
+  // Use plain object for reactivity - keyed by "trackId:col"
+  let cellStates: Record<string, LoopState> = {};
+
+  function getCellKey(trackId: string, col: number): string {
+    return `${trackId}:${col}`;
   }
 
   function getCellStatesForTrack(trackId: string): Map<number, LoopState> {
-    return cellStates.get(trackId) ?? new Map();
+    const result = new Map<number, LoopState>();
+    for (const [key, state] of Object.entries(cellStates)) {
+      if (key.startsWith(`${trackId}:`)) {
+        const col = parseInt(key.split(':')[1]);
+        result.set(col, state);
+      }
+    }
+    return result;
   }
 
   async function ensureAudio() {
@@ -47,13 +51,14 @@
     const loopId = cell?.loopId;
     const loop = loopId ? $loops[loopId] : null;
 
-    const trackCellStates = cellStates.get(trackId) ?? new Map();
-    const currentState = trackCellStates.get(col) ?? 'inactive';
+    const key = getCellKey(trackId, col);
+    const currentState = cellStates[key] ?? 'inactive';
 
     if (currentState === 'active') {
       // Stop immediately
       loopScheduler.stopLoop(trackId);
-      trackCellStates.set(col, 'inactive');
+      cellStates[key] = 'inactive';
+      cellStates = { ...cellStates }; // trigger reactivity
     } else {
       // Generate loop if needed
       let actualLoop = loop;
@@ -70,24 +75,23 @@
       }
 
       // Clear other cells in this track
-      for (const [c, state] of trackCellStates) {
-        if (c !== col && state === 'active') {
-          trackCellStates.set(c, 'inactive');
+      const newStates = { ...cellStates };
+      for (const [k, state] of Object.entries(newStates)) {
+        if (k.startsWith(`${trackId}:`) && k !== key && state === 'active') {
+          newStates[k] = 'inactive';
         }
       }
 
       // Start playing
       loopScheduler.scheduleLoop(trackId, actualLoop);
-      trackCellStates.set(col, 'active');
+      newStates[key] = 'active';
+      cellStates = newStates;
 
       if (!$isPlaying) {
         transport.start();
         playback.setTransportState('started');
       }
     }
-
-    cellStates.set(trackId, trackCellStates);
-    cellStates = cellStates; // trigger reactivity
   }
 
   async function handleCellDoubleTap(e: CustomEvent<{ trackId: string; col: number }>) {
@@ -97,13 +101,13 @@
     const track = $tracks.find(t => t.id === trackId);
     if (!track) return;
 
-    const trackCellStates = cellStates.get(trackId) ?? new Map();
-    const currentState = trackCellStates.get(col) ?? 'inactive';
+    const key = getCellKey(trackId, col);
+    const currentState = cellStates[key] ?? 'inactive';
 
     if (currentState === 'active') {
       // Stop at end of loop
       loopScheduler.stopLoopAtEnd(trackId);
-      trackCellStates.set(col, 'stopping');
+      cellStates = { ...cellStates, [key]: 'stopping' };
       // Will be set to inactive when loop actually stops
     } else {
       // Queue to play
@@ -124,11 +128,8 @@
       }
 
       loopScheduler.queueLoop(trackId, loop);
-      trackCellStates.set(col, 'queued');
+      cellStates = { ...cellStates, [key]: 'queued' };
     }
-
-    cellStates.set(trackId, trackCellStates);
-    cellStates = cellStates;
   }
 
   function handleCellContextMenu(e: CustomEvent<{ trackId: string; col: number }>) {

@@ -1,15 +1,6 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
   import { playback, isPlaying } from '../lib/stores';
   import { transport, initAudio } from '../lib/audio';
-
-  let position = '0:0:0';
-  let animationFrame: number;
-
-  function updatePosition() {
-    position = transport.getPosition();
-    animationFrame = requestAnimationFrame(updatePosition);
-  }
 
   async function handlePlayPause() {
     await initAudio();
@@ -21,14 +12,6 @@
     transport.stop();
     playback.reset();
   }
-
-  onMount(() => {
-    animationFrame = requestAnimationFrame(updatePosition);
-  });
-
-  onDestroy(() => {
-    cancelAnimationFrame(animationFrame);
-  });
 </script>
 
 <div class="transport">
@@ -43,10 +26,6 @@
   <button class="transport-btn" on:click={handleStop}>
     <span class="icon">⏹</span>
   </button>
-
-  <div class="position">
-    {position}
-  </div>
 </div>
 
 <style>
@@ -81,13 +60,5 @@
 
   .icon {
     font-size: 1.25rem;
-  }
-
-  .position {
-    font-family: monospace;
-    font-size: 1rem;
-    color: #888;
-    min-width: 100px;
-    text-align: center;
   }
 </style>
