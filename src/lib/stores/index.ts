@@ -1,0 +1,2 @@
+// Svelte store exports
+export {};
