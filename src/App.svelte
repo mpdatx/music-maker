@@ -1,12 +1,12 @@
 <script lang="ts">
   import Header from './components/Header.svelte';
+  import LoopGrid from './components/LoopGrid.svelte';
 </script>
 
 <main>
   <Header />
   <div class="content">
-    <!-- Grid will go here -->
-    <p style="color: #ccc; text-align: center; padding: 2rem;">Loop Grid Coming Soon</p>
+    <LoopGrid />
   </div>
 </main>
 
@@ -16,6 +16,10 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: #0f0f1a;
     color: #fff;
+  }
+
+  :global(*) {
+    box-sizing: border-box;
   }
 
   main {
