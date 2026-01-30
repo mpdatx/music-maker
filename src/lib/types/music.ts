@@ -63,3 +63,5 @@ export interface CellState {
 }
 
 export type GenrePreset = 'lofi-hiphop' | 'edm-house' | 'rock' | 'ambient' | 'funk' | 'pop';
+
+export type TransportState = 'stopped' | 'started' | 'paused';

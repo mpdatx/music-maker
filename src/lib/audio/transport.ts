@@ -1,7 +1,6 @@
 import * as Tone from 'tone';
 import { loopScheduler } from './loopScheduler';
-
-export type TransportState = 'stopped' | 'started' | 'paused';
+import type { TransportState } from '../types';
 
 class TransportController {
   start(): void {
