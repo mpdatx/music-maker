@@ -1,2 +1,1 @@
-// Type definitions for Music Maker
-export {};
+export * from './music';
