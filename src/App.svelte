@@ -1,6 +1,7 @@
 <script lang="ts">
   import Header from './components/Header.svelte';
   import LoopGrid from './components/LoopGrid.svelte';
+  import Transport from './components/Transport.svelte';
 </script>
 
 <main>
@@ -8,6 +9,7 @@
   <div class="content">
     <LoopGrid />
   </div>
+  <Transport />
 </main>
 
 <style>
@@ -31,5 +33,6 @@
   .content {
     flex: 1;
     padding: 1rem;
+    overflow-y: auto;
   }
 </style>
