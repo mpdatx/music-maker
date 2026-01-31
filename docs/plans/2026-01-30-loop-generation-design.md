@@ -571,13 +571,34 @@ Mitigations:
 - Cache generated variants in memory during session
 - Consider Web Workers for generation to avoid UI blocking
 
-### Migration Path
+### Implementation Phases
 
-1. **Phase 1**: Harmonic awareness with "Free" progression as escape hatch
-2. **Phase 2**: Richer variation (can be done independently)
-3. **Phase 3**: Structural intelligence (builds on both)
+**Phase 1: Harmonic Awareness**
+- Chord progression data model and genre presets
+- Loop bundle structure with chord variations
+- Generator updates to produce per-chord variations
+- Scheduler updates for progression cycling
+- Drum fill system at chord boundaries
+- UI for progression display and selection
+- "Free" single-chord progression for backward compatibility
 
-Each phase delivers value independently.
+**Phase 2: Richer Musical Variation**
+- Expanded rhythm template library (~15-20 per instrument per genre)
+- Transformation system (shift, subdivide, ghost, accent, omit, fill, euclidean)
+- Genre groove profiles (swing, push/pull, pocket, tightness)
+- Three-layer dynamics (genre profile → pattern-aware → humanization)
+- Integration with existing generators
+
+**Phase 3: Structural Intelligence**
+- Section type definitions and genre palettes
+- Section behavior parameters (energy, density, complexity multipliers)
+- 2D variant matrix (chords × sections)
+- Timeline/arrangement data model
+- Structure templates per genre
+- Transition system (fills, builds, drops, impacts)
+- UI for structure view and editing
+
+Each phase delivers value independently. Phase 1 creates infrastructure that Phases 2 and 3 build upon.
 
 ### Testing
 
