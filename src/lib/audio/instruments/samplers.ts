@@ -1,8 +1,7 @@
 import * as Tone from 'tone';
 
-// Sample URLs hosted via GitHub Pages from tonejs-instruments
-// Samples served locally from public/samples/
-const SAMPLE_BASE_URL = '/samples/';
+// Sample URLs - uses Vite's base URL for proper path in production
+const SAMPLE_BASE_URL = `${import.meta.env.BASE_URL}samples/`;
 
 // Internal types matching the sample library folder names
 type SampleLibraryInstrument =
