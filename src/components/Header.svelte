@@ -122,6 +122,12 @@
         Loops
       </button>
       <button
+        class:active={$playMode === 'keys'}
+        onclick={() => playMode.set('keys')}
+      >
+        Keys
+      </button>
+      <button
         class:active={$playMode === 'pad'}
         onclick={() => playMode.set('pad')}
       >

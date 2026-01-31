@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
-  import { project, tracks, loops, playback, isPlaying, genre } from '../lib/stores';
+  import { project, tracks, loops, playback, isPlaying, genre, playMode } from '../lib/stores';
   import { initAudio, transport, instrumentManager, loopScheduler, preloadInstruments, isSampledInstrument } from '../lib/audio';
   import { GENRE_TRACKS } from '../lib/stores/project';
   import { generateLoop, GENRE_PRESETS } from '../lib/generators';
@@ -332,6 +332,29 @@
     editorLoopId = null;
   }
 
+  // Handle note press in keys mode
+  async function handleNotePress(trackId: string, note: string) {
+    await ensureAudio();
+    const instrument = instrumentManager.getTrackInstrument(trackId);
+    if (!instrument) return;
+
+    const synth = instrument.synth;
+    if ('triggerAttack' in synth) {
+      synth.triggerAttack(note);
+    }
+  }
+
+  // Handle note release in keys mode
+  function handleNoteRelease(trackId: string, note: string) {
+    const instrument = instrumentManager.getTrackInstrument(trackId);
+    if (!instrument) return;
+
+    const synth = instrument.synth;
+    if ('triggerRelease' in synth) {
+      synth.triggerRelease(note);
+    }
+  }
+
   // Expose stopAll for parent components
   export function stopAll() {
     loopScheduler.stopAll();
@@ -348,21 +371,23 @@
 </script>
 
 <div class="loop-grid">
-  <div class="column-headers">
-    <div class="header-spacer"></div>
-    <div class="column-buttons">
-      {#each Array(columnCount) as _, col}
-        <button
-          class="column-play-btn"
-          class:active={isColumnActive(col)}
-          onclick={() => handleColumnPlay(col)}
-          title={isColumnActive(col) ? `Stop column ${col + 1}` : `Play column ${col + 1}`}
-        >
-          {isColumnActive(col) ? '⏹' : '▶'}
-        </button>
-      {/each}
+  {#if $playMode === 'loop'}
+    <div class="column-headers">
+      <div class="header-spacer"></div>
+      <div class="column-buttons">
+        {#each Array(columnCount) as _, col}
+          <button
+            class="column-play-btn"
+            class:active={isColumnActive(col)}
+            onclick={() => handleColumnPlay(col)}
+            title={isColumnActive(col) ? `Stop column ${col + 1}` : `Play column ${col + 1}`}
+          >
+            {isColumnActive(col) ? '⏹' : '▶'}
+          </button>
+        {/each}
+      </div>
     </div>
-  </div>
+  {/if}
 
   {#each $tracks as track (track.id)}
     <TrackRow
@@ -370,6 +395,9 @@
       allCellStates={cellStates}
       allCellProgress={cellProgress}
       loops={$loops}
+      mode={$playMode}
+      onNotePress={handleNotePress}
+      onNoteRelease={handleNoteRelease}
       on:cellTap={handleCellTap}
       on:cellDoubleTap={handleCellDoubleTap}
       on:cellContextMenu={handleCellContextMenu}

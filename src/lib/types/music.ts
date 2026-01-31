@@ -92,7 +92,7 @@ export type GenrePreset = 'lofi-hiphop' | 'edm-house' | 'rock' | 'ambient' | 'fu
 
 export type TransportState = 'stopped' | 'started' | 'paused';
 
-export type PlayMode = 'loop' | 'pad';
+export type PlayMode = 'loop' | 'pad' | 'keys';
 
 export interface PadConfig {
   instrument: Exclude<InstrumentType, 'drums' | 'percussion'>;

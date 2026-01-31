@@ -1,22 +1,34 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { Track, LoopState } from '../lib/types';
+  import type { Track, LoopState, PlayMode } from '../lib/types';
   import GridCell from './GridCell.svelte';
+  import NoteButton from './NoteButton.svelte';
   import { getInstrumentIcon, isSampledInstrument } from '../lib/icons';
+  import { getScaleNotes, NOTES } from '../lib/generators/theory';
+  import { musicalKey, scale } from '../lib/stores';
 
   let {
     track,
     allCellStates,
     allCellProgress,
-    loops
+    loops,
+    mode = 'loop',
+    onNotePress,
+    onNoteRelease
   }: {
     track: Track;
     allCellStates: Record<string, LoopState>;
     allCellProgress: Record<string, number>;
     loops: Record<string, any>;
+    mode?: PlayMode;
+    onNotePress?: (trackId: string, note: string) => void;
+    onNoteRelease?: (trackId: string, note: string) => void;
   } = $props();
 
   let isSampled = $derived(isSampledInstrument(track.type));
+
+  // Get notes for keys mode (one octave of the current scale)
+  let scaleNotes = $derived(getScaleNotes($musicalKey, $scale, 4));
 
   const dispatch = createEventDispatcher<{
     cellTap: { trackId: string; col: number };
@@ -119,21 +131,32 @@
   </div>
 
   <div class="cells">
-    {#each track.cells as cell (cell.col)}
-      {@const loop = getLoop(cell.col)}
-      <GridCell
-        hasLoop={hasLoop(cell.col)}
-        state={getCellState(cell.col)}
-        progress={getCellProgress(cell.col)}
-        instrumentColor={INSTRUMENT_COLORS[track.type] ?? '#3a3a5e'}
-        instrumentType={track.type}
-        notes={loop?.notes ?? []}
-        bars={loop?.bars ?? 2}
-        ontap={() => dispatch('cellTap', { trackId: track.id, col: cell.col })}
-        ondoubletap={() => dispatch('cellDoubleTap', { trackId: track.id, col: cell.col })}
-        oncontextmenu={() => dispatch('cellContextMenu', { trackId: track.id, col: cell.col })}
-      />
-    {/each}
+    {#if mode === 'keys'}
+      {#each scaleNotes as note (note)}
+        <NoteButton
+          {note}
+          color={INSTRUMENT_COLORS[track.type] ?? '#3a3a5e'}
+          onpress={() => onNotePress?.(track.id, note)}
+          onrelease={() => onNoteRelease?.(track.id, note)}
+        />
+      {/each}
+    {:else}
+      {#each track.cells as cell (cell.col)}
+        {@const loop = getLoop(cell.col)}
+        <GridCell
+          hasLoop={hasLoop(cell.col)}
+          state={getCellState(cell.col)}
+          progress={getCellProgress(cell.col)}
+          instrumentColor={INSTRUMENT_COLORS[track.type] ?? '#3a3a5e'}
+          instrumentType={track.type}
+          notes={loop?.notes ?? []}
+          bars={loop?.bars ?? 2}
+          ontap={() => dispatch('cellTap', { trackId: track.id, col: cell.col })}
+          ondoubletap={() => dispatch('cellDoubleTap', { trackId: track.id, col: cell.col })}
+          oncontextmenu={() => dispatch('cellContextMenu', { trackId: track.id, col: cell.col })}
+        />
+      {/each}
+    {/if}
   </div>
 </div>
 
