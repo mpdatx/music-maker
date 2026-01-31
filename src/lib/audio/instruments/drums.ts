@@ -236,10 +236,226 @@ const DRUM_PRESETS: Record<GenrePreset, DrumKitPreset> = {
       envelope: { attack: 0.003, decay: 0.1, sustain: 0, release: 0.08 },
     },
   },
+  'jazz': {
+    kick: {
+      pitchDecay: 0.06,
+      octaves: 4,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.01, decay: 0.4, sustain: 0.02, release: 0.4 },
+    },
+    snare: {
+      noise: { type: 'pink' },
+      envelope: { attack: 0.005, decay: 0.2, sustain: 0.01, release: 0.15 },
+    },
+    hihat: {
+      envelope: { attack: 0.002, decay: 0.08, release: 0.03 },
+      harmonicity: 4,
+      modulationIndex: 18,
+      resonance: 3200,
+      octaves: 1,
+    },
+    openhat: {
+      envelope: { attack: 0.002, decay: 0.35, release: 0.15 },
+      harmonicity: 4,
+      modulationIndex: 18,
+      resonance: 3200,
+      octaves: 1,
+    },
+    tom: {
+      pitchDecay: 0.08,
+      octaves: 3,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.01, decay: 0.35, sustain: 0.02, release: 0.35 },
+    },
+    clap: {
+      noise: { type: 'pink' },
+      envelope: { attack: 0.01, decay: 0.12, sustain: 0, release: 0.1 },
+    },
+  },
+  'classical': {
+    kick: {
+      pitchDecay: 0.1,
+      octaves: 3,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.02, decay: 0.5, sustain: 0.02, release: 0.5 },
+    },
+    snare: {
+      noise: { type: 'pink' },
+      envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 },
+    },
+    hihat: {
+      envelope: { attack: 0.005, decay: 0.12, release: 0.06 },
+      harmonicity: 3.5,
+      modulationIndex: 12,
+      resonance: 2500,
+      octaves: 0.8,
+    },
+    openhat: {
+      envelope: { attack: 0.005, decay: 0.5, release: 0.25 },
+      harmonicity: 3.5,
+      modulationIndex: 12,
+      resonance: 2500,
+      octaves: 0.8,
+    },
+    tom: {
+      pitchDecay: 0.12,
+      octaves: 2.5,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.02, decay: 0.45, sustain: 0.02, release: 0.45 },
+    },
+    clap: {
+      noise: { type: 'pink' },
+      envelope: { attack: 0.015, decay: 0.2, sustain: 0, release: 0.15 },
+    },
+  },
+  'bossa-nova': {
+    kick: {
+      pitchDecay: 0.05,
+      octaves: 4,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.008, decay: 0.35, sustain: 0.01, release: 0.35 },
+    },
+    snare: {
+      noise: { type: 'pink' },
+      envelope: { attack: 0.003, decay: 0.18, sustain: 0, release: 0.12 },
+    },
+    hihat: {
+      envelope: { attack: 0.002, decay: 0.06, release: 0.02 },
+      harmonicity: 4.5,
+      modulationIndex: 22,
+      resonance: 3500,
+      octaves: 1.2,
+    },
+    openhat: {
+      envelope: { attack: 0.002, decay: 0.3, release: 0.12 },
+      harmonicity: 4.5,
+      modulationIndex: 22,
+      resonance: 3500,
+      octaves: 1.2,
+    },
+    tom: {
+      pitchDecay: 0.07,
+      octaves: 3.5,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.008, decay: 0.32, sustain: 0.01, release: 0.3 },
+    },
+    clap: {
+      noise: { type: 'pink' },
+      envelope: { attack: 0.005, decay: 0.1, sustain: 0, release: 0.08 },
+    },
+  },
+  'blues': {
+    kick: {
+      pitchDecay: 0.06,
+      octaves: 5,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.005, decay: 0.4, sustain: 0.01, release: 0.4 },
+    },
+    snare: {
+      noise: { type: 'pink' },
+      envelope: { attack: 0.003, decay: 0.22, sustain: 0.01, release: 0.15 },
+    },
+    hihat: {
+      envelope: { attack: 0.002, decay: 0.07, release: 0.025 },
+      harmonicity: 4.5,
+      modulationIndex: 25,
+      resonance: 3800,
+      octaves: 1.2,
+    },
+    openhat: {
+      envelope: { attack: 0.002, decay: 0.35, release: 0.12 },
+      harmonicity: 4.5,
+      modulationIndex: 25,
+      resonance: 3800,
+      octaves: 1.2,
+    },
+    tom: {
+      pitchDecay: 0.08,
+      octaves: 3.5,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.005, decay: 0.38, sustain: 0.01, release: 0.35 },
+    },
+    clap: {
+      noise: { type: 'pink' },
+      envelope: { attack: 0.008, decay: 0.12, sustain: 0, release: 0.1 },
+    },
+  },
+  'reggae': {
+    kick: {
+      pitchDecay: 0.07,
+      octaves: 5,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.005, decay: 0.45, sustain: 0.02, release: 0.45 },
+    },
+    snare: {
+      noise: { type: 'pink' },
+      envelope: { attack: 0.005, decay: 0.2, sustain: 0.01, release: 0.15 },
+    },
+    hihat: {
+      envelope: { attack: 0.002, decay: 0.06, release: 0.02 },
+      harmonicity: 4.2,
+      modulationIndex: 20,
+      resonance: 3500,
+      octaves: 1,
+    },
+    openhat: {
+      envelope: { attack: 0.002, decay: 0.32, release: 0.12 },
+      harmonicity: 4.2,
+      modulationIndex: 20,
+      resonance: 3500,
+      octaves: 1,
+    },
+    tom: {
+      pitchDecay: 0.09,
+      octaves: 3,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.008, decay: 0.4, sustain: 0.02, release: 0.38 },
+    },
+    clap: {
+      noise: { type: 'pink' },
+      envelope: { attack: 0.008, decay: 0.12, sustain: 0, release: 0.1 },
+    },
+  },
+  'cinematic': {
+    kick: {
+      pitchDecay: 0.12,
+      octaves: 4,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.02, decay: 0.7, sustain: 0.03, release: 0.7 },
+    },
+    snare: {
+      noise: { type: 'brown' },
+      envelope: { attack: 0.015, decay: 0.35, sustain: 0, release: 0.25 },
+    },
+    hihat: {
+      envelope: { attack: 0.008, decay: 0.12, release: 0.06 },
+      harmonicity: 3,
+      modulationIndex: 15,
+      resonance: 2200,
+      octaves: 0.8,
+    },
+    openhat: {
+      envelope: { attack: 0.008, decay: 0.55, release: 0.28 },
+      harmonicity: 3,
+      modulationIndex: 15,
+      resonance: 2200,
+      octaves: 0.8,
+    },
+    tom: {
+      pitchDecay: 0.15,
+      octaves: 2.5,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.02, decay: 0.55, sustain: 0.03, release: 0.55 },
+    },
+    clap: {
+      noise: { type: 'brown' },
+      envelope: { attack: 0.02, decay: 0.22, sustain: 0, release: 0.18 },
+    },
+  },
 };
 
 export function createDrumKit(genre: GenrePreset = 'lofi-hiphop'): DrumKit {
-  const preset = DRUM_PRESETS[genre];
+  const preset = DRUM_PRESETS[genre] ?? DRUM_PRESETS['lofi-hiphop'];
 
   const kick = new Tone.MembraneSynth(preset.kick);
   const snare = new Tone.NoiseSynth(preset.snare);
