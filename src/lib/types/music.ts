@@ -88,7 +88,9 @@ export interface CellState {
   state: LoopState;
 }
 
-export type GenrePreset = 'lofi-hiphop' | 'edm-house' | 'rock' | 'ambient' | 'funk' | 'pop';
+// GenrePreset is now derived from GENRES in src/lib/genres.ts
+// Re-export for backwards compatibility
+export type { GenrePreset } from '../genres';
 
 export type TransportState = 'stopped' | 'started' | 'paused';
 
