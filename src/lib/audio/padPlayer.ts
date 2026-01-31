@@ -1,6 +1,9 @@
 import * as Tone from 'tone';
-import type { InstrumentType, GenrePreset, ScaleType } from '../types';
+import type { InstrumentType, GenrePreset, ScaleType, SynthInstrumentType } from '../types';
 import { createMelodicSynth, type MelodicSynth } from './instruments/melodic';
+import { createSampledInstrument, isSampledInstrument, type SampledInstrumentType } from './instruments/samplers';
+
+type PadSynth = MelodicSynth | Tone.Sampler;
 
 const SCALE_INTERVALS: Record<ScaleType, number[]> = {
   major: [0, 2, 4, 5, 7, 9, 11],
@@ -14,30 +17,52 @@ const SCALE_INTERVALS: Record<ScaleType, number[]> = {
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
 class PadPlayer {
-  private synth: MelodicSynth | null = null;
+  private synth: PadSynth | null = null;
   private channel: Tone.Channel;
   private limiter: Tone.Limiter;
   private currentInstrument: Exclude<InstrumentType, 'drums' | 'percussion'> = 'keys';
   private currentGenre: GenrePreset = 'lofi-hiphop';
   private activeNotes: Set<string> = new Set();
+  private loading = false;
 
   constructor() {
     this.limiter = new Tone.Limiter(-1).toDestination();
     this.channel = new Tone.Channel().connect(this.limiter);
   }
 
-  private createSynth() {
+  private async createSynth() {
     if (this.synth) {
       this.synth.dispose();
+      this.synth = null;
     }
-    this.synth = createMelodicSynth(this.currentInstrument, this.currentGenre);
-    this.synth.connect(this.channel);
+
+    if (isSampledInstrument(this.currentInstrument)) {
+      this.loading = true;
+      try {
+        const sampler = await createSampledInstrument(this.currentInstrument as SampledInstrumentType);
+        this.synth = sampler;
+        this.synth.connect(this.channel);
+      } catch (err) {
+        console.error(`Failed to load sampler for ${this.currentInstrument}:`, err);
+        // Fall back to a basic synth
+        this.synth = createMelodicSynth('keys', this.currentGenre);
+        this.synth.connect(this.channel);
+      }
+      this.loading = false;
+    } else {
+      this.synth = createMelodicSynth(this.currentInstrument as SynthInstrumentType, this.currentGenre);
+      this.synth.connect(this.channel);
+    }
   }
 
   setInstrument(instrument: Exclude<InstrumentType, 'drums' | 'percussion'>) {
     if (instrument === this.currentInstrument && this.synth) return;
     this.currentInstrument = instrument;
     this.createSynth();
+  }
+
+  isLoading(): boolean {
+    return this.loading;
   }
 
   setGenre(genre: GenrePreset) {
@@ -79,14 +104,17 @@ class PadPlayer {
   playNote(note: string, velocity: number = 0.8) {
     if (!this.synth) {
       this.createSynth();
+      return; // Wait for async synth creation
     }
 
-    if (this.activeNotes.has(note)) return;
+    if (this.loading || this.activeNotes.has(note)) return;
 
     this.activeNotes.add(note);
 
-    if ('triggerAttack' in this.synth!) {
-      this.synth!.triggerAttack(note, Tone.now(), velocity);
+    if (this.synth instanceof Tone.Sampler) {
+      this.synth.triggerAttack(note, Tone.now(), velocity);
+    } else if ('triggerAttack' in this.synth) {
+      this.synth.triggerAttack(note, Tone.now(), velocity);
     }
   }
 
@@ -95,26 +123,25 @@ class PadPlayer {
 
     this.activeNotes.delete(note);
 
-    if ('triggerRelease' in this.synth!) {
-      // PolySynth needs the note, MonoSynth just releases
-      if (this.synth instanceof Tone.PolySynth) {
-        this.synth.triggerRelease(note, Tone.now());
-      } else {
-        (this.synth as Tone.MonoSynth).triggerRelease(Tone.now());
-      }
+    if (this.synth instanceof Tone.Sampler) {
+      this.synth.triggerRelease(note, Tone.now());
+    } else if (this.synth instanceof Tone.PolySynth) {
+      this.synth.triggerRelease(note, Tone.now());
+    } else {
+      (this.synth as Tone.MonoSynth).triggerRelease(Tone.now());
     }
   }
 
   releaseAll() {
     if (!this.synth) return;
 
-    for (const note of this.activeNotes) {
-      if (this.synth instanceof Tone.PolySynth) {
+    if (this.synth instanceof Tone.Sampler) {
+      this.synth.releaseAll(Tone.now());
+    } else if (this.synth instanceof Tone.PolySynth) {
+      for (const note of this.activeNotes) {
         this.synth.triggerRelease(note, Tone.now());
       }
-    }
-
-    if (!(this.synth instanceof Tone.PolySynth)) {
+    } else {
       (this.synth as Tone.MonoSynth).triggerRelease(Tone.now());
     }
 

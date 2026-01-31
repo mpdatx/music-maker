@@ -1,12 +1,20 @@
 import * as Tone from 'tone';
-import type { InstrumentType, GenrePreset } from '../types';
+import type { InstrumentType, GenrePreset, SynthInstrumentType } from '../types';
 import { createDrumKit, connectDrumKit, disposeDrumKit, type DrumKit } from './instruments/drums';
 import { createMelodicSynth, type MelodicSynth } from './instruments/melodic';
+import {
+  createSampledInstrument,
+  isSampledInstrument,
+  type SampledInstrumentType as SamplerType,
+} from './instruments/samplers';
+
+type InstrumentSynth = DrumKit | MelodicSynth | Tone.Sampler;
 
 interface TrackInstrument {
   type: InstrumentType;
-  synth: DrumKit | MelodicSynth;
+  synth: InstrumentSynth;
   channel: Tone.Channel;
+  loading?: boolean;
 }
 
 class InstrumentManager {
@@ -27,18 +35,51 @@ class InstrumentManager {
     const useGenre = genre ?? this.currentGenre;
     const channel = new Tone.Channel().connect(this.master);
 
-    let synth: DrumKit | MelodicSynth;
+    let synth: InstrumentSynth;
+    let loading = false;
+
     if (type === 'drums' || type === 'percussion') {
       synth = createDrumKit(useGenre);
       connectDrumKit(synth as DrumKit, channel);
+    } else if (isSampledInstrument(type)) {
+      // For sampled instruments, create a placeholder and load async
+      synth = new Tone.PolySynth(Tone.Synth).connect(channel); // Placeholder
+      loading = true;
+
+      // Load the sampler async (mapping to library name handled internally)
+      createSampledInstrument(type as SamplerType).then((sampler) => {
+        const instrument = this.instruments.get(trackId);
+        if (instrument && instrument.type === type) {
+          // Dispose placeholder and replace with sampler
+          (instrument.synth as MelodicSynth).dispose();
+          sampler.connect(channel);
+          instrument.synth = sampler;
+          instrument.loading = false;
+          this.onInstrumentLoaded?.(trackId, type);
+        }
+      }).catch((err) => {
+        console.error(`Failed to load sampler for ${type}:`, err);
+        // Keep the placeholder synth as fallback
+        const instrument = this.instruments.get(trackId);
+        if (instrument) {
+          instrument.loading = false;
+        }
+      });
     } else {
-      synth = createMelodicSynth(type, useGenre);
+      synth = createMelodicSynth(type as SynthInstrumentType, useGenre);
       (synth as MelodicSynth).connect(channel);
     }
 
-    const instrument: TrackInstrument = { type, synth, channel };
+    const instrument: TrackInstrument = { type, synth, channel, loading };
     this.instruments.set(trackId, instrument);
     return instrument;
+  }
+
+  // Callback for when sampled instrument finishes loading
+  onInstrumentLoaded?: (trackId: string, type: InstrumentType) => void;
+
+  isInstrumentLoading(trackId: string): boolean {
+    return this.instruments.get(trackId)?.loading ?? false;
   }
 
   getTrackInstrument(trackId: string): TrackInstrument | undefined {
@@ -75,6 +116,8 @@ class InstrumentManager {
     if (instrument) {
       if (instrument.type === 'drums' || instrument.type === 'percussion') {
         disposeDrumKit(instrument.synth as DrumKit);
+      } else if (instrument.synth instanceof Tone.Sampler) {
+        instrument.synth.dispose();
       } else {
         (instrument.synth as MelodicSynth).dispose();
       }

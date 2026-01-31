@@ -72,40 +72,69 @@ export function generateLoop(
 
   let notes: Note[];
   switch (type) {
+    // Drum instruments
     case 'drums':
     case 'percussion':
       notes = generateDrumPattern(params, actualSeed, bars);
       break;
+
+    // Bass instruments (synth and sampled)
     case 'bass':
+    case 'bass-electric':
+    case 'contrabass':
+    case 'tuba':
       notes = generateBassLine(params, key, scale, actualSeed, bars);
       break;
+
+    // Chord/keys instruments
     case 'keys':
+    case 'piano':
+    case 'organ-sampled':
+    case 'harmonium':
+    case 'epiano':
       notes = generateChords(params, key, scale, actualSeed, bars);
       break;
+
+    // Lead/melody instruments
     case 'lead':
+    case 'trumpet':
+    case 'saxophone':
+    case 'flute':
+    case 'clarinet':
+    case 'violin':
       notes = generateLead(params, key, scale, actualSeed, bars);
       break;
+
+    // Pad/sustain instruments
     case 'pad':
+    case 'choir':
+    case 'cello':
+    case 'french-horn':
+    case 'trombone':
       notes = generatePad(params, key, scale, actualSeed, bars);
       break;
+
+    // Pluck/arp instruments
     case 'pluck':
+    case 'kalimba':
+    case 'xylophone':
+    case 'harp':
+    case 'guitar-acoustic':
+    case 'guitar-electric':
+    case 'bassoon':
       notes = generatePluck(params, key, scale, actualSeed, bars);
       break;
+
+    // Strings (legato style)
     case 'strings':
       notes = generateStrings(params, key, scale, actualSeed, bars);
       break;
+
+    // Organ (sustained chords)
     case 'organ':
       notes = generateOrgan(params, key, scale, actualSeed, bars);
       break;
-    case 'choir':
-      notes = generatePad(params, key, scale, actualSeed, bars); // Similar to pad
-      break;
-    case 'epiano':
-      notes = generateChords(params, key, scale, actualSeed, bars); // Similar to keys
-      break;
-    case 'kalimba':
-      notes = generatePluck(params, key, scale, actualSeed, bars); // Similar to pluck
-      break;
+
     default:
       notes = [];
   }

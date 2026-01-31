@@ -1,4 +1,29 @@
-export type InstrumentType = 'drums' | 'percussion' | 'bass' | 'keys' | 'lead' | 'pad' | 'pluck' | 'strings' | 'organ' | 'choir' | 'epiano' | 'kalimba';
+// Synthesizer-based instruments
+export type SynthInstrumentType = 'drums' | 'percussion' | 'bass' | 'keys' | 'lead' | 'pad' | 'pluck' | 'strings' | 'organ' | 'choir' | 'epiano' | 'kalimba';
+
+// Sample-based instruments (real recordings)
+export type SampledInstrumentType =
+  | 'piano'
+  | 'guitar-acoustic'
+  | 'guitar-electric'
+  | 'bass-electric'
+  | 'violin'
+  | 'cello'
+  | 'contrabass'
+  | 'harp'
+  | 'trumpet'
+  | 'trombone'
+  | 'french-horn'
+  | 'tuba'
+  | 'saxophone'
+  | 'flute'
+  | 'clarinet'
+  | 'bassoon'
+  | 'organ-sampled'
+  | 'harmonium'
+  | 'xylophone';
+
+export type InstrumentType = SynthInstrumentType | SampledInstrumentType;
 
 export type ScaleType = 'major' | 'minor' | 'dorian' | 'mixolydian' | 'pentatonic' | 'chromatic';
 

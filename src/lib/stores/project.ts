@@ -6,6 +6,62 @@ function generateId(): string {
   return Math.random().toString(36).substring(2, 15);
 }
 
+// Genre-specific track configurations with sampled instruments where appropriate
+export const GENRE_TRACKS: Record<GenrePreset, Array<{ type: InstrumentType; name: string }>> = {
+  'lofi-hiphop': [
+    { type: 'drums', name: 'Drums' },
+    { type: 'piano', name: 'Piano' },
+    { type: 'bass-electric', name: 'Bass' },
+    { type: 'guitar-acoustic', name: 'Guitar' },
+    { type: 'pad', name: 'Pad' },
+    { type: 'pluck', name: 'Pluck' },
+    { type: 'violin', name: 'Violin' },
+  ],
+  'edm-house': [
+    { type: 'drums', name: 'Drums' },
+    { type: 'percussion', name: 'Percussion' },
+    { type: 'bass', name: 'Bass' },
+    { type: 'keys', name: 'Keys' },
+    { type: 'lead', name: 'Lead' },
+    { type: 'pad', name: 'Pad' },
+    { type: 'pluck', name: 'Pluck' },
+  ],
+  'rock': [
+    { type: 'drums', name: 'Drums' },
+    { type: 'bass-electric', name: 'Bass' },
+    { type: 'guitar-electric', name: 'Lead Guitar' },
+    { type: 'guitar-acoustic', name: 'Rhythm Guitar' },
+    { type: 'piano', name: 'Piano' },
+    { type: 'organ-sampled', name: 'Organ' },
+  ],
+  'ambient': [
+    { type: 'drums', name: 'Drums' },
+    { type: 'piano', name: 'Piano' },
+    { type: 'pad', name: 'Pad' },
+    { type: 'violin', name: 'Violin' },
+    { type: 'cello', name: 'Cello' },
+    { type: 'harp', name: 'Harp' },
+    { type: 'flute', name: 'Flute' },
+  ],
+  'funk': [
+    { type: 'drums', name: 'Drums' },
+    { type: 'percussion', name: 'Percussion' },
+    { type: 'bass-electric', name: 'Bass' },
+    { type: 'guitar-electric', name: 'Guitar' },
+    { type: 'organ-sampled', name: 'Organ' },
+    { type: 'trumpet', name: 'Trumpet' },
+    { type: 'saxophone', name: 'Sax' },
+  ],
+  'pop': [
+    { type: 'drums', name: 'Drums' },
+    { type: 'bass-electric', name: 'Bass' },
+    { type: 'piano', name: 'Piano' },
+    { type: 'guitar-acoustic', name: 'Guitar' },
+    { type: 'strings', name: 'Strings' },
+    { type: 'pad', name: 'Pad' },
+  ],
+};
+
 function createDefaultProject(): Project {
   const colCount = 8;
   const key = 'C';
@@ -14,17 +70,7 @@ function createDefaultProject(): Project {
   const loops: Record<string, Loop> = {};
   const params = GENRE_PRESETS[genre].defaultParams;
 
-  const trackDefs: Array<{ type: InstrumentType; name: string }> = [
-    { type: 'drums', name: 'Drums' },
-    { type: 'percussion', name: 'Percussion' },
-    { type: 'bass', name: 'Bass' },
-    { type: 'keys', name: 'Keys' },
-    { type: 'lead', name: 'Lead' },
-    { type: 'pad', name: 'Pad' },
-    { type: 'pluck', name: 'Pluck' },
-    { type: 'strings', name: 'Strings' },
-    { type: 'organ', name: 'Organ' },
-  ];
+  const trackDefs = GENRE_TRACKS[genre];
 
   const tracks: Track[] = trackDefs.map(({ type, name }) => {
     const trackId = generateId();
@@ -81,6 +127,37 @@ function createProjectStore() {
     setScale: (scale: Project['scale']) => update(p => ({ ...p, scale, updatedAt: Date.now() })),
 
     setGenre: (genre: GenrePreset) => update(p => ({ ...p, genre, updatedAt: Date.now() })),
+
+    // Rebuild tracks for a new genre with appropriate instruments
+    rebuildTracksForGenre: (genre: GenrePreset, key: string, scale: Project['scale']) => update(p => {
+      const params = GENRE_PRESETS[genre].defaultParams;
+      const trackDefs = GENRE_TRACKS[genre];
+      const colCount = p.tracks[0]?.cells.length ?? 8;
+      const loops: Record<string, Loop> = {};
+
+      const tracks: Track[] = trackDefs.map(({ type, name }) => {
+        const trackId = generateId();
+        const cells = Array.from({ length: colCount }, (_, col) => {
+          const loop = generateLoop(type, params, key, scale);
+          loops[loop.id] = loop;
+          return { col, loopId: loop.id };
+        });
+
+        return {
+          id: trackId,
+          type,
+          name,
+          volume: 0.8,
+          pan: 0,
+          muted: false,
+          solo: false,
+          effects: [],
+          cells,
+        };
+      });
+
+      return { ...p, genre, tracks, loops, updatedAt: Date.now() };
+    }),
 
     setTrackVolume: (trackId: string, volume: number) => update(p => ({
       ...p,

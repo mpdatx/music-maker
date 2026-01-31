@@ -2,7 +2,7 @@
   import { createEventDispatcher } from 'svelte';
   import type { Track, LoopState } from '../lib/types';
   import GridCell from './GridCell.svelte';
-  import { getInstrumentIcon } from '../lib/icons';
+  import { getInstrumentIcon, isSampledInstrument } from '../lib/icons';
 
   let {
     track,
@@ -16,6 +16,8 @@
     loops: Record<string, any>;
   } = $props();
 
+  let isSampled = $derived(isSampledInstrument(track.type));
+
   const dispatch = createEventDispatcher<{
     cellTap: { trackId: string; col: number };
     cellDoubleTap: { trackId: string; col: number };
@@ -25,6 +27,7 @@
   }>();
 
   const INSTRUMENT_COLORS: Record<string, string> = {
+    // Synth instruments
     drums: '#e11d48',
     percussion: '#db2777',
     bass: '#7c3aed',
@@ -37,6 +40,26 @@
     choir: '#6366f1',
     epiano: '#0d9488',
     kalimba: '#ca8a04',
+    // Sampled instruments
+    piano: '#1e40af',
+    'guitar-acoustic': '#b45309',
+    'guitar-electric': '#dc2626',
+    'bass-electric': '#4c1d95',
+    violin: '#7e22ce',
+    cello: '#6d28d9',
+    contrabass: '#4338ca',
+    harp: '#c2410c',
+    trumpet: '#eab308',
+    trombone: '#f59e0b',
+    'french-horn': '#d97706',
+    tuba: '#92400e',
+    saxophone: '#f97316',
+    flute: '#06b6d4',
+    clarinet: '#0891b2',
+    bassoon: '#0e7490',
+    'organ-sampled': '#a21caf',
+    harmonium: '#c026d3',
+    xylophone: '#16a34a',
   };
 
   function getCellState(col: number): LoopState {
@@ -65,6 +88,13 @@
     <div class="track-info">
       <span class="track-icon" style="color: {INSTRUMENT_COLORS[track.type] ?? '#888'}">
         {@html getInstrumentIcon(track.type)}
+        {#if isSampled}
+          <span class="sampled-badge" title="Sampled instrument">
+            <svg viewBox="0 0 16 16" fill="currentColor">
+              <path d="M2 8a1.5 1.5 0 1 1 3 0v4a1.5 1.5 0 0 1-3 0V8zm4.5-2a1.5 1.5 0 0 1 3 0v6a1.5 1.5 0 0 1-3 0V6zm4.5-2a1.5 1.5 0 0 1 3 0v8a1.5 1.5 0 0 1-3 0V4z"/>
+            </svg>
+          </span>
+        {/if}
       </span>
       <span class="track-name">{track.name}</span>
     </div>
@@ -127,6 +157,7 @@
   }
 
   .track-icon {
+    position: relative;
     width: 28px;
     height: 28px;
     display: flex;
@@ -138,6 +169,25 @@
   .track-icon :global(svg) {
     width: 100%;
     height: 100%;
+  }
+
+  .sampled-badge {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 12px;
+    height: 12px;
+    background: #1a1a2e;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid currentColor;
+  }
+
+  .sampled-badge svg {
+    width: 8px;
+    height: 8px;
   }
 
   .track-name {

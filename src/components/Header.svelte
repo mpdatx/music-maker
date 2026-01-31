@@ -31,19 +31,22 @@
 
   function handleGenreChange(newGenre: GenrePreset) {
     if (newGenre === $genre) return;
-    project.setGenre(newGenre);
 
     const config = GENRE_PRESETS[newGenre];
     const newBpm = getGenreBpm(newGenre);
+    const projectData = project.getSnapshot();
+
+    // Rebuild tracks with genre-appropriate instruments
+    project.rebuildTracksForGenre(newGenre, projectData.key, projectData.scale);
+
     project.setBpm(newBpm);
     transport.setBpm(newBpm);
     transport.setSwing(config.swing);
 
-    // Update all instruments to use new genre sounds
+    // Update instrument manager genre (for synth presets)
     instrumentManager.setGenre(newGenre);
 
-    // Regenerate all loops with new genre parameters
-    regenerateAllWithParams(config.defaultParams);
+    dispatch('regenerateAll');
   }
 
   function regenerateAllWithParams(params: typeof GENRE_PRESETS['lofi-hiphop']['defaultParams']) {

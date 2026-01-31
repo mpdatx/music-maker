@@ -5,3 +5,4 @@ export * from './transport';
 export * from './padPlayer';
 export * from './instruments/drums';
 export * from './instruments/melodic';
+export * from './instruments/samplers';

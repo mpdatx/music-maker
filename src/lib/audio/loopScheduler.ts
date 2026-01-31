@@ -4,6 +4,8 @@ import { instrumentManager } from './instrumentManager';
 import type { DrumKit } from './instruments/drums';
 import type { MelodicSynth } from './instruments/melodic';
 
+type InstrumentSynth = DrumKit | MelodicSynth | Tone.Sampler;
+
 interface ScheduledLoop {
   trackId: string;
   loop: Loop;
@@ -48,7 +50,7 @@ class LoopScheduler {
   }
 
   private triggerNote(
-    instrument: { type: InstrumentType; synth: DrumKit | MelodicSynth },
+    instrument: { type: InstrumentType; synth: InstrumentSynth },
     event: { pitch: string; duration: string; velocity: number },
     time: Tone.Unit.Time
   ): void {
@@ -65,6 +67,9 @@ class LoopScheduler {
           }
         }
       }
+    } else if (instrument.synth instanceof Tone.Sampler) {
+      // Handle sampled instruments
+      instrument.synth.triggerAttackRelease(event.pitch, event.duration, time, event.velocity);
     } else {
       const synth = instrument.synth as MelodicSynth;
       synth.triggerAttackRelease(event.pitch, event.duration, time, event.velocity);

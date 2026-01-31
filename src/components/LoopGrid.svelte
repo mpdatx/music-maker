@@ -34,6 +34,38 @@
     animationFrame = requestAnimationFrame(updateProgress);
   });
 
+  // Track the current track types to detect when genre changes tracks
+  let lastTrackSignature = '';
+  $: {
+    const currentSignature = $tracks.map(t => `${t.id}:${t.type}`).join(',');
+    if (lastTrackSignature && lastTrackSignature !== currentSignature && audioInitialized) {
+      // Tracks have changed - reinitialize instruments
+      reinitializeInstruments();
+    }
+    lastTrackSignature = currentSignature;
+  }
+
+  async function reinitializeInstruments() {
+    // Stop all playing loops first
+    loopScheduler.stopAll();
+    cellStates = {};
+    cellProgress = {};
+
+    // Dispose old instruments and create new ones
+    for (const track of $tracks) {
+      instrumentManager.disposeTrackInstrument(track.id);
+    }
+
+    // Small delay to allow dispose to complete
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    for (const track of $tracks) {
+      instrumentManager.createTrackInstrument(track.id, track.type);
+      instrumentManager.setTrackVolume(track.id, track.volume);
+      instrumentManager.setTrackMute(track.id, track.muted);
+    }
+  }
+
   function getCellKey(trackId: string, col: number): string {
     return `${trackId}:${col}`;
   }

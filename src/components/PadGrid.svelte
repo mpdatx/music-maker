@@ -5,14 +5,65 @@
   import type { InstrumentType } from '../lib/types';
   import PadCell from './PadCell.svelte';
 
-  const melodicInstruments: Array<Exclude<InstrumentType, 'drums' | 'percussion'>> = ['keys', 'bass', 'lead', 'pad', 'pluck', 'strings', 'organ', 'choir', 'epiano', 'kalimba'];
+  // Grouped instruments for better organization
+  const instrumentGroups: { label: string; instruments: Array<Exclude<InstrumentType, 'drums' | 'percussion'>> }[] = [
+    {
+      label: 'Synths',
+      instruments: ['keys', 'bass', 'lead', 'pad', 'pluck', 'strings', 'organ', 'choir', 'epiano', 'kalimba'],
+    },
+    {
+      label: 'Piano & Keys',
+      instruments: ['piano', 'organ-sampled', 'harmonium'],
+    },
+    {
+      label: 'Guitars',
+      instruments: ['guitar-acoustic', 'guitar-electric', 'bass-electric'],
+    },
+    {
+      label: 'Strings',
+      instruments: ['violin', 'cello', 'contrabass', 'harp'],
+    },
+    {
+      label: 'Brass',
+      instruments: ['trumpet', 'trombone', 'french-horn', 'tuba'],
+    },
+    {
+      label: 'Woodwinds',
+      instruments: ['flute', 'clarinet', 'saxophone', 'bassoon'],
+    },
+    {
+      label: 'Percussion',
+      instruments: ['xylophone'],
+    },
+  ];
+
+  function formatInstrumentName(name: string): string {
+    return name
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, c => c.toUpperCase())
+      .replace('Epiano', 'E-Piano')
+      .replace('Organ Sampled', 'Organ (Sampled)');
+  }
 
   let currentInstrument = $derived($padConfig.instrument);
   let baseOctave = $derived($padConfig.baseOctave);
   let rows = $derived($padConfig.rows);
+  let isLoading = $state(false);
 
   // Columns = number of notes in the scale
   let cols = $derived(padPlayer.getScaleLength($scale));
+
+  // Check loading state periodically when instrument changes
+  $effect(() => {
+    currentInstrument; // Track this dependency
+    const checkLoading = () => {
+      isLoading = padPlayer.isLoading();
+      if (isLoading) {
+        setTimeout(checkLoading, 100);
+      }
+    };
+    checkLoading();
+  });
 
   // Update pad player when settings change
   $effect(() => {
@@ -67,8 +118,12 @@
     <label>
       Instrument:
       <select value={currentInstrument} onchange={handleInstrumentChange}>
-        {#each melodicInstruments as inst}
-          <option value={inst}>{inst.charAt(0).toUpperCase() + inst.slice(1)}</option>
+        {#each instrumentGroups as group}
+          <optgroup label={group.label}>
+            {#each group.instruments as inst}
+              <option value={inst}>{formatInstrumentName(inst)}</option>
+            {/each}
+          </optgroup>
         {/each}
       </select>
     </label>
@@ -79,6 +134,9 @@
       <button onclick={() => handleOctaveChange(1)} disabled={baseOctave >= 6}>+</button>
     </div>
 
+    {#if isLoading}
+      <span class="loading">Loading samples...</span>
+    {/if}
     <span class="hint">Key: {$musicalKey} {$scale}</span>
   </div>
 
@@ -151,6 +209,31 @@
     color: #fff;
     padding: 0.25rem 0.5rem;
     border-radius: 4px;
+    max-width: 180px;
+  }
+
+  select optgroup {
+    background: #1a1a2e;
+    color: #888;
+    font-weight: 600;
+    padding: 0.25rem;
+  }
+
+  select option {
+    background: #2a2a4e;
+    color: #fff;
+    padding: 0.25rem;
+  }
+
+  .loading {
+    color: #f59e0b;
+    font-size: 0.75rem;
+    animation: pulse 1s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
   }
 
   .octave-control {

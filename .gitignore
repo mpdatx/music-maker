@@ -1,6 +1,9 @@
 # Worktrees
 .worktrees/
 
+# Audio samples (459MB - download separately)
+public/samples/
+
 # Logs
 logs
 *.log
