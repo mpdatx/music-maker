@@ -1,5 +1,5 @@
 import * as Tone from 'tone';
-import type { Loop, Note, InstrumentType } from '../types';
+import type { Loop, Note, InstrumentType, LoopBundle } from '../types';
 import { instrumentManager } from './instrumentManager';
 import type { DrumKit } from './instruments/drums';
 import type { MelodicSynth } from './instruments/melodic';
@@ -42,9 +42,26 @@ interface ScheduledLoop {
   part: Tone.Part;
 }
 
+interface ScheduledBundle {
+  trackId: string;
+  bundle: LoopBundle;
+  parts: Tone.Part[];  // One part per variation
+  clock: ProgressionClock;
+}
+
 class LoopScheduler {
   private scheduledLoops: Map<string, ScheduledLoop> = new Map();
+  private scheduledBundles: Map<string, ScheduledBundle> = new Map();
+  private progressionClock: ProgressionClock | null = null;
   private loopLength: Tone.Unit.Time = '2m'; // 2 bars default
+
+  setProgressionClock(clock: ProgressionClock): void {
+    this.progressionClock = clock;
+  }
+
+  getProgressionClock(): ProgressionClock | null {
+    return this.progressionClock;
+  }
 
   private getLoopKey(trackId: string): string {
     return trackId;
@@ -113,13 +130,70 @@ class LoopScheduler {
     }
   }
 
+  scheduleBundleLoop(trackId: string, bundle: LoopBundle, bpm: number): void {
+    // Stop any existing loop or bundle on this track
+    this.stopLoop(trackId);
+
+    const instrument = instrumentManager.getTrackInstrument(trackId);
+    if (!instrument) {
+      console.warn(`No instrument found for track ${trackId}`);
+      return;
+    }
+
+    if (!this.progressionClock) {
+      console.warn('No progression clock set - cannot schedule bundle');
+      return;
+    }
+
+    const clock = this.progressionClock;
+    const barsPerChord = bundle.bars;
+    const totalBars = clock.totalBars;
+    const parts: Tone.Part[] = [];
+
+    // Create a part for each variation, offset to start at the correct bar
+    for (const variation of bundle.variations) {
+      const startBar = variation.chordIndex * barsPerChord;
+      const events = variation.notes.map(note => ({
+        time: note.time,
+        pitch: note.pitch,
+        duration: note.duration,
+        velocity: note.velocity,
+      }));
+
+      const part = new Tone.Part((time, event) => {
+        this.triggerNote(instrument, event, time);
+      }, events);
+
+      part.loop = true;
+      part.loopEnd = `${totalBars}m`;
+      // Start this variation at its chord position within the progression cycle
+      part.start(`${startBar}m`);
+      parts.push(part);
+    }
+
+    const key = this.getLoopKey(trackId);
+    this.scheduledBundles.set(key, { trackId, bundle, parts, clock });
+  }
+
   stopLoop(trackId: string): void {
     const key = this.getLoopKey(trackId);
+
+    // Stop regular loop if present
     const scheduled = this.scheduledLoops.get(key);
     if (scheduled) {
       scheduled.part.stop();
       scheduled.part.dispose();
       this.scheduledLoops.delete(key);
+    }
+
+    // Stop bundle if present
+    const scheduledBundle = this.scheduledBundles.get(key);
+    if (scheduledBundle) {
+      for (const part of scheduledBundle.parts) {
+        part.stop();
+        part.dispose();
+      }
+      this.scheduledBundles.delete(key);
     }
   }
 
@@ -174,7 +248,14 @@ class LoopScheduler {
   }
 
   isPlaying(trackId: string): boolean {
-    return this.scheduledLoops.has(this.getLoopKey(trackId));
+    const key = this.getLoopKey(trackId);
+    return this.scheduledLoops.has(key) || this.scheduledBundles.has(key);
+  }
+
+  getCurrentChordIndex(): number {
+    if (!this.progressionClock) return 0;
+    const transport = Tone.getTransport();
+    return this.progressionClock.getChordIndexAtTime(transport.seconds);
   }
 
   getLoopProgress(trackId: string): number {
@@ -202,11 +283,19 @@ class LoopScheduler {
   }
 
   stopAll(): void {
-    for (const [key, scheduled] of this.scheduledLoops) {
+    for (const [, scheduled] of this.scheduledLoops) {
       scheduled.part.stop();
       scheduled.part.dispose();
     }
     this.scheduledLoops.clear();
+
+    for (const [, scheduledBundle] of this.scheduledBundles) {
+      for (const part of scheduledBundle.parts) {
+        part.stop();
+        part.dispose();
+      }
+    }
+    this.scheduledBundles.clear();
   }
 }
 
