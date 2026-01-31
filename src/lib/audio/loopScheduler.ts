@@ -6,6 +6,36 @@ import type { MelodicSynth } from './instruments/melodic';
 
 type InstrumentSynth = DrumKit | MelodicSynth | Tone.Sampler;
 
+export interface ProgressionClockConfig {
+  progressionId: string;
+  progressionLength: number;
+  barsPerChord: number;
+  bpm: number;
+}
+
+export class ProgressionClock {
+  private config: ProgressionClockConfig;
+
+  constructor(config: ProgressionClockConfig) {
+    this.config = config;
+  }
+
+  get totalBars(): number {
+    return this.config.progressionLength * this.config.barsPerChord;
+  }
+
+  getChordIndexAtBar(bar: number): number {
+    const barInProgression = bar % this.totalBars;
+    return Math.floor(barInProgression / this.config.barsPerChord);
+  }
+
+  getChordIndexAtTime(seconds: number): number {
+    const secondsPerBar = (4 * 60) / this.config.bpm;
+    const bar = Math.floor(seconds / secondsPerBar);
+    return this.getChordIndexAtBar(bar);
+  }
+}
+
 interface ScheduledLoop {
   trackId: string;
   loop: Loop;
