@@ -25,8 +25,26 @@
 
   let isSampled = $derived(isSampledInstrument(track.type));
 
-  // Per-row keys mode toggle
-  let keysMode = $state(false);
+  // Per-row keys mode toggle with animation states
+  let showKeys = $state(false);
+  let keysFlipped = $state(false);
+
+  function toggleKeysMode() {
+    if (showKeys) {
+      // Flip out, then hide
+      keysFlipped = false;
+      setTimeout(() => {
+        showKeys = false;
+      }, 300); // Match CSS transition duration
+    } else {
+      // Show, then flip in
+      showKeys = true;
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        keysFlipped = true;
+      }, 10);
+    }
+  }
 
   // Get notes for keys mode (one octave of the current scale)
   let scaleNotes = $derived(getScaleNotes($musicalKey, $scale, 4));
@@ -129,8 +147,8 @@
         </button>
         <button
           class="keys-btn"
-          class:active={keysMode}
-          onclick={() => keysMode = !keysMode}
+          class:active={showKeys}
+          onclick={toggleKeysMode}
           title="Toggle keys mode"
         >
           K
@@ -140,11 +158,13 @@
   </div>
 
   <div class="cells">
-    {#if keysMode}
-      {#each scaleNotes as note (note)}
+    {#if showKeys}
+      {#each scaleNotes as note, i (note)}
         <NoteButton
           {note}
           color={INSTRUMENT_COLORS[track.type] ?? '#3a3a5e'}
+          flipped={keysFlipped}
+          index={i}
           onpress={() => onNotePress?.(track.id, note)}
           onrelease={() => onNoteRelease?.(track.id, note)}
         />

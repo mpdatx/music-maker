@@ -2,17 +2,30 @@
   let {
     note,
     color = '#3a3a5e',
+    flipped = true,
+    index = 0,
     onpress,
     onrelease
   }: {
     note: string;
     color?: string;
+    flipped?: boolean;
+    index?: number;
     onpress?: () => void;
     onrelease?: () => void;
   } = $props();
 
   let isPressed = $state(false);
-  let isFlipped = $state(true); // Start flipped to show note name
+  let isFlipped = $state(false);
+
+  // Stagger animation based on index
+  $effect(() => {
+    const delay = index * 30;
+    const timeout = setTimeout(() => {
+      isFlipped = flipped;
+    }, delay);
+    return () => clearTimeout(timeout);
+  });
 
   function handlePointerDown(e: PointerEvent) {
     e.preventDefault();
