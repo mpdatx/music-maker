@@ -7,8 +7,44 @@ import { generatePad } from './pad';
 import { generatePluck } from './pluck';
 import { generateStrings } from './strings';
 import { generateOrgan } from './organ';
+import { clampNoteToRange } from './theory';
 
 export { SeededRandom } from './theory';
+
+// MIDI note ranges for sampled instruments (based on available samples)
+const SAMPLED_INSTRUMENT_RANGES: Record<string, [number, number]> = {
+  'piano': [33, 108],           // A1 to C8
+  'guitar-acoustic': [38, 74],   // D2 to D5
+  'guitar-electric': [40, 84],   // E2 to C6
+  'bass-electric': [28, 61],     // E1 to C#5
+  'violin': [55, 96],            // G3 to C7
+  'cello': [36, 60],             // C2 to C5
+  'contrabass': [30, 59],        // F#1 to B3
+  'harp': [28, 89],              // E1 to F7
+  'trumpet': [53, 84],           // F3 to C6
+  'trombone': [34, 65],          // A#1 to F4
+  'french-horn': [33, 77],       // A1 to F5
+  'tuba': [29, 62],              // F1 to D4
+  'saxophone': [51, 80],         // D#3 to G#5
+  'flute': [60, 96],             // C4 to C7
+  'clarinet': [50, 90],          // D3 to F#6
+  'bassoon': [43, 60],           // G2 to C5
+  'organ-sampled': [24, 84],     // C1 to C6
+  'harmonium': [36, 74],         // C2 to D5
+  'xylophone': [67, 108],        // G4 to C8
+};
+
+// Constrain notes to instrument range
+function constrainNotesToRange(notes: Note[], instrumentType: InstrumentType): Note[] {
+  const range = SAMPLED_INSTRUMENT_RANGES[instrumentType];
+  if (!range) return notes; // Synth instruments don't need constraining
+
+  const [minMidi, maxMidi] = range;
+  return notes.map(note => ({
+    ...note,
+    pitch: clampNoteToRange(note.pitch, minMidi, maxMidi),
+  }));
+}
 
 interface GenreConfig {
   name: string;
@@ -138,6 +174,9 @@ export function generateLoop(
     default:
       notes = [];
   }
+
+  // Constrain notes to instrument's sample range
+  notes = constrainNotesToRange(notes, type);
 
   return {
     id: generateId(),

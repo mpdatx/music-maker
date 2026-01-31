@@ -1,5 +1,42 @@
 export const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
+// Convert note name to MIDI number
+export function noteToMidi(note: string): number {
+  const match = note.match(/^([A-G]#?)(\d+)$/);
+  if (!match) return 60; // Default to C4
+  const [, noteName, octaveStr] = match;
+  const noteIndex = NOTES.indexOf(noteName);
+  if (noteIndex === -1) return 60;
+  const octave = parseInt(octaveStr, 10);
+  return (octave + 1) * 12 + noteIndex;
+}
+
+// Convert MIDI number to note name
+export function midiToNote(midi: number): string {
+  const noteIndex = midi % 12;
+  const octave = Math.floor(midi / 12) - 1;
+  return `${NOTES[noteIndex]}${octave}`;
+}
+
+// Clamp MIDI note to range by transposing octaves
+export function clampNoteToRange(note: string, minMidi: number, maxMidi: number): string {
+  let midi = noteToMidi(note);
+
+  // Transpose by octaves until within range
+  while (midi < minMidi) {
+    midi += 12;
+  }
+  while (midi > maxMidi) {
+    midi -= 12;
+  }
+
+  // If still out of range (e.g., range is less than an octave), clamp
+  if (midi < minMidi) midi = minMidi;
+  if (midi > maxMidi) midi = maxMidi;
+
+  return midiToNote(midi);
+}
+
 export const SCALES: Record<string, number[]> = {
   major: [0, 2, 4, 5, 7, 9, 11],
   minor: [0, 2, 3, 5, 7, 8, 10],

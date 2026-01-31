@@ -103,18 +103,26 @@ export function getInstrumentIcon(type: string): string {
 }
 
 // Instruments that use audio samples instead of synthesis
-// Add instrument types here when they use Tone.Sampler or similar
 export const SAMPLED_INSTRUMENTS = new Set<string>([
-  // Future sampled instruments:
-  // 'piano',
-  // 'guitar-acoustic',
-  // 'guitar-electric',
-  // 'bass-electric',
-  // 'violin',
-  // 'cello',
-  // 'trumpet',
-  // 'saxophone',
-  // 'flute',
+  'piano',
+  'guitar-acoustic',
+  'guitar-electric',
+  'bass-electric',
+  'violin',
+  'cello',
+  'contrabass',
+  'harp',
+  'trumpet',
+  'trombone',
+  'french-horn',
+  'tuba',
+  'saxophone',
+  'flute',
+  'clarinet',
+  'bassoon',
+  'organ-sampled',
+  'harmonium',
+  'xylophone',
 ]);
 
 export function isSampledInstrument(type: string): boolean {

@@ -88,15 +88,15 @@
     <div class="track-info">
       <span class="track-icon" style="color: {INSTRUMENT_COLORS[track.type] ?? '#888'}">
         {@html getInstrumentIcon(track.type)}
-        {#if isSampled}
-          <span class="sampled-badge" title="Sampled instrument">
-            <svg viewBox="0 0 16 16" fill="currentColor">
-              <path d="M2 8a1.5 1.5 0 1 1 3 0v4a1.5 1.5 0 0 1-3 0V8zm4.5-2a1.5 1.5 0 0 1 3 0v6a1.5 1.5 0 0 1-3 0V6zm4.5-2a1.5 1.5 0 0 1 3 0v8a1.5 1.5 0 0 1-3 0V4z"/>
-            </svg>
-          </span>
-        {/if}
       </span>
-      <span class="track-name">{track.name}</span>
+      {#if isSampled}
+        <span class="sampled-badge" title="Sampled instrument" style="color: {INSTRUMENT_COLORS[track.type] ?? '#888'}">
+          <svg viewBox="0 0 16 16" fill="currentColor">
+            <path d="M2 8a1.5 1.5 0 1 1 3 0v4a1.5 1.5 0 0 1-3 0V8zm4.5-2a1.5 1.5 0 0 1 3 0v6a1.5 1.5 0 0 1-3 0V6zm4.5-2a1.5 1.5 0 0 1 3 0v8a1.5 1.5 0 0 1-3 0V4z"/>
+          </svg>
+        </span>
+      {/if}
+      <span class="track-name" class:with-badge={isSampled}>{track.name}</span>
     </div>
     <div class="track-controls">
       <button
@@ -157,7 +157,6 @@
   }
 
   .track-icon {
-    position: relative;
     width: 28px;
     height: 28px;
     display: flex;
@@ -172,28 +171,31 @@
   }
 
   .sampled-badge {
-    position: absolute;
-    bottom: -2px;
-    right: -2px;
-    width: 12px;
-    height: 12px;
-    background: #1a1a2e;
-    border-radius: 2px;
+    width: 20px;
+    height: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid currentColor;
+    flex-shrink: 0;
+    opacity: 0.9;
   }
 
   .sampled-badge svg {
-    width: 8px;
-    height: 8px;
+    width: 100%;
+    height: 100%;
   }
 
   .track-name {
     font-size: 0.8rem;
     font-weight: 500;
     color: #ccc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .track-name.with-badge {
+    font-size: 0.7rem;
   }
 
   .track-controls {
