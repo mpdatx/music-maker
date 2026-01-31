@@ -62,10 +62,10 @@
     on:stopAll={() => loopGrid?.stopAll()}
   />
   <div class="content">
-    {#if $playMode === 'loop'}
-      <LoopGrid bind:this={loopGrid} />
-    {:else}
+    {#if $playMode === 'pad'}
       <PadGrid />
+    {:else}
+      <LoopGrid bind:this={loopGrid} />
     {/if}
   </div>
 </main>
