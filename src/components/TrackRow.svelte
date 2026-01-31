@@ -2,10 +2,19 @@
   import { createEventDispatcher } from 'svelte';
   import type { Track, LoopState } from '../lib/types';
   import GridCell from './GridCell.svelte';
+  import { getInstrumentIcon } from '../lib/icons';
 
-  export let track: Track;
-  export let cellStates: Map<number, LoopState>;
-  export let loops: Record<string, any>;
+  let {
+    track,
+    allCellStates,
+    allCellProgress,
+    loops
+  }: {
+    track: Track;
+    allCellStates: Record<string, LoopState>;
+    allCellProgress: Record<string, number>;
+    loops: Record<string, any>;
+  } = $props();
 
   const dispatch = createEventDispatcher<{
     cellTap: { trackId: string; col: number };
@@ -22,33 +31,55 @@
     keys: '#2563eb',
     lead: '#0891b2',
     pad: '#059669',
+    pluck: '#d97706',
+    strings: '#9333ea',
+    organ: '#be185d',
+    choir: '#6366f1',
+    epiano: '#0d9488',
+    kalimba: '#ca8a04',
   };
 
   function getCellState(col: number): LoopState {
-    return cellStates.get(col) ?? 'inactive';
+    const key = `${track.id}:${col}`;
+    return allCellStates[key] ?? 'inactive';
   }
 
   function hasLoop(col: number): boolean {
     const loopId = track.cells.find(c => c.col === col)?.loopId;
     return loopId != null && loops[loopId] != null;
   }
+
+  function getLoop(col: number) {
+    const loopId = track.cells.find(c => c.col === col)?.loopId;
+    return loopId ? loops[loopId] : null;
+  }
+
+  function getCellProgress(col: number): number {
+    const key = `${track.id}:${col}`;
+    return allCellProgress[key] ?? 0;
+  }
 </script>
 
 <div class="track-row">
   <div class="track-header">
-    <span class="track-name">{track.name}</span>
+    <div class="track-info">
+      <span class="track-icon" style="color: {INSTRUMENT_COLORS[track.type] ?? '#888'}">
+        {@html getInstrumentIcon(track.type)}
+      </span>
+      <span class="track-name">{track.name}</span>
+    </div>
     <div class="track-controls">
       <button
         class="mute-btn"
         class:active={track.muted}
-        on:click={() => dispatch('mute', { trackId: track.id })}
+        onclick={() => dispatch('mute', { trackId: track.id })}
       >
         M
       </button>
       <button
         class="solo-btn"
         class:active={track.solo}
-        on:click={() => dispatch('solo', { trackId: track.id })}
+        onclick={() => dispatch('solo', { trackId: track.id })}
       >
         S
       </button>
@@ -57,13 +88,18 @@
 
   <div class="cells">
     {#each track.cells as cell (cell.col)}
+      {@const loop = getLoop(cell.col)}
       <GridCell
         hasLoop={hasLoop(cell.col)}
         state={getCellState(cell.col)}
+        progress={getCellProgress(cell.col)}
         instrumentColor={INSTRUMENT_COLORS[track.type] ?? '#3a3a5e'}
-        on:tap={() => dispatch('cellTap', { trackId: track.id, col: cell.col })}
-        on:doubletap={() => dispatch('cellDoubleTap', { trackId: track.id, col: cell.col })}
-        on:contextmenu={() => dispatch('cellContextMenu', { trackId: track.id, col: cell.col })}
+        instrumentType={track.type}
+        notes={loop?.notes ?? []}
+        bars={loop?.bars ?? 2}
+        ontap={() => dispatch('cellTap', { trackId: track.id, col: cell.col })}
+        ondoubletap={() => dispatch('cellDoubleTap', { trackId: track.id, col: cell.col })}
+        oncontextmenu={() => dispatch('cellContextMenu', { trackId: track.id, col: cell.col })}
       />
     {/each}
   </div>
@@ -84,8 +120,28 @@
     gap: 0.25rem;
   }
 
+  .track-info {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .track-icon {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .track-icon :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+
   .track-name {
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     font-weight: 500;
     color: #ccc;
   }

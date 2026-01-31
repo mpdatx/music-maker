@@ -1,41 +1,62 @@
 import { writable, derived, get } from 'svelte/store';
 import type { Project, Track, Loop, InstrumentType, GenrePreset } from '../types';
+import { generateLoop, GENRE_PRESETS } from '../generators';
 
 function generateId(): string {
   return Math.random().toString(36).substring(2, 15);
 }
 
-function createDefaultTrack(type: InstrumentType, name: string, colCount: number): Track {
-  return {
-    id: generateId(),
-    type,
-    name,
-    volume: 0.8,
-    pan: 0,
-    muted: false,
-    solo: false,
-    effects: [],
-    cells: Array.from({ length: colCount }, (_, i) => ({ col: i, loopId: null })),
-  };
-}
-
 function createDefaultProject(): Project {
-  const colCount = 4;
+  const colCount = 8;
+  const key = 'C';
+  const scale: Project['scale'] = 'minor';
+  const genre: GenrePreset = 'lofi-hiphop';
+  const loops: Record<string, Loop> = {};
+  const params = GENRE_PRESETS[genre].defaultParams;
+
+  const trackDefs: Array<{ type: InstrumentType; name: string }> = [
+    { type: 'drums', name: 'Drums' },
+    { type: 'percussion', name: 'Percussion' },
+    { type: 'bass', name: 'Bass' },
+    { type: 'keys', name: 'Keys' },
+    { type: 'lead', name: 'Lead' },
+    { type: 'pad', name: 'Pad' },
+    { type: 'pluck', name: 'Pluck' },
+    { type: 'strings', name: 'Strings' },
+    { type: 'organ', name: 'Organ' },
+  ];
+
+  const tracks: Track[] = trackDefs.map(({ type, name }) => {
+    const trackId = generateId();
+    const cells = Array.from({ length: colCount }, (_, col) => {
+      // Generate a unique loop for each cell
+      const loop = generateLoop(type, params, key, scale);
+      loops[loop.id] = loop;
+      return { col, loopId: loop.id };
+    });
+
+    return {
+      id: trackId,
+      type,
+      name,
+      volume: 0.8,
+      pan: 0,
+      muted: false,
+      solo: false,
+      effects: [],
+      cells,
+    };
+  });
+
   return {
     id: generateId(),
     name: 'New Project',
     bpm: 120,
-    key: 'C',
-    scale: 'major',
-    tracks: [
-      createDefaultTrack('drums', 'Drums', colCount),
-      createDefaultTrack('percussion', 'Percussion', colCount),
-      createDefaultTrack('bass', 'Bass', colCount),
-      createDefaultTrack('keys', 'Keys', colCount),
-      createDefaultTrack('lead', 'Lead', colCount),
-      createDefaultTrack('pad', 'Pad', colCount),
-    ],
-    loops: {},
+    key,
+    scale,
+    genre,
+    tracks,
+    loops,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
@@ -58,6 +79,8 @@ function createProjectStore() {
     setKey: (key: string) => update(p => ({ ...p, key, updatedAt: Date.now() })),
 
     setScale: (scale: Project['scale']) => update(p => ({ ...p, scale, updatedAt: Date.now() })),
+
+    setGenre: (genre: GenrePreset) => update(p => ({ ...p, genre, updatedAt: Date.now() })),
 
     setTrackVolume: (trackId: string, volume: number) => update(p => ({
       ...p,
@@ -124,3 +147,4 @@ export const loops = derived(project, $p => $p.loops);
 export const bpm = derived(project, $p => $p.bpm);
 export const musicalKey = derived(project, $p => $p.key);
 export const scale = derived(project, $p => $p.scale);
+export const genre = derived(project, $p => $p.genre);

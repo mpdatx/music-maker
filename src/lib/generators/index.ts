@@ -4,6 +4,9 @@ import { generateBassLine } from './bass';
 import { generateChords } from './chords';
 import { generateLead } from './lead';
 import { generatePad } from './pad';
+import { generatePluck } from './pluck';
+import { generateStrings } from './strings';
+import { generateOrgan } from './organ';
 
 export { SeededRandom } from './theory';
 
@@ -85,6 +88,24 @@ export function generateLoop(
     case 'pad':
       notes = generatePad(params, key, scale, actualSeed, bars);
       break;
+    case 'pluck':
+      notes = generatePluck(params, key, scale, actualSeed, bars);
+      break;
+    case 'strings':
+      notes = generateStrings(params, key, scale, actualSeed, bars);
+      break;
+    case 'organ':
+      notes = generateOrgan(params, key, scale, actualSeed, bars);
+      break;
+    case 'choir':
+      notes = generatePad(params, key, scale, actualSeed, bars); // Similar to pad
+      break;
+    case 'epiano':
+      notes = generateChords(params, key, scale, actualSeed, bars); // Similar to keys
+      break;
+    case 'kalimba':
+      notes = generatePluck(params, key, scale, actualSeed, bars); // Similar to pluck
+      break;
     default:
       notes = [];
   }
@@ -105,7 +126,7 @@ export function generateLoopsForGenre(
   scale: string
 ): Record<InstrumentType, Loop> {
   const config = GENRE_PRESETS[genre];
-  const types: InstrumentType[] = ['drums', 'percussion', 'bass', 'keys', 'lead', 'pad'];
+  const types: InstrumentType[] = ['drums', 'percussion', 'bass', 'keys', 'lead', 'pad', 'pluck', 'strings', 'organ', 'choir', 'epiano', 'kalimba'];
 
   const loops: Partial<Record<InstrumentType, Loop>> = {};
 

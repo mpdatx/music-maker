@@ -1,6 +1,6 @@
-export type InstrumentType = 'drums' | 'percussion' | 'bass' | 'keys' | 'lead' | 'pad';
+export type InstrumentType = 'drums' | 'percussion' | 'bass' | 'keys' | 'lead' | 'pad' | 'pluck' | 'strings' | 'organ' | 'choir' | 'epiano' | 'kalimba';
 
-export type ScaleType = 'major' | 'minor' | 'dorian' | 'mixolydian' | 'pentatonic';
+export type ScaleType = 'major' | 'minor' | 'dorian' | 'mixolydian' | 'pentatonic' | 'chromatic';
 
 export interface Note {
   pitch: string;      // e.g., "C4" or "kick"
@@ -49,6 +49,7 @@ export interface Project {
   bpm: number;
   key: string;
   scale: ScaleType;
+  genre: GenrePreset;
   tracks: Track[];
   loops: Record<string, Loop>;
   createdAt: number;
@@ -65,3 +66,12 @@ export interface CellState {
 export type GenrePreset = 'lofi-hiphop' | 'edm-house' | 'rock' | 'ambient' | 'funk' | 'pop';
 
 export type TransportState = 'stopped' | 'started' | 'paused';
+
+export type PlayMode = 'loop' | 'pad';
+
+export interface PadConfig {
+  instrument: Exclude<InstrumentType, 'drums' | 'percussion'>;
+  rows: number;
+  cols: number;
+  baseOctave: number;
+}

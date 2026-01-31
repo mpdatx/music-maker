@@ -1,5 +1,5 @@
 import { writable, derived } from 'svelte/store';
-import type { LoopState, TransportState } from '../types';
+import type { LoopState, TransportState, PlayMode, PadConfig, InstrumentType } from '../types';
 
 interface CellPlaybackState {
   trackId: string;
@@ -83,3 +83,27 @@ export const playback = createPlaybackStore();
 
 export const transportState = derived(playback, $p => $p.transportState);
 export const isPlaying = derived(playback, $p => $p.transportState === 'started');
+
+// Play mode store
+export const playMode = writable<PlayMode>('loop');
+
+// Pad configuration store
+function createPadConfigStore() {
+  const { subscribe, set, update } = writable<PadConfig>({
+    instrument: 'keys',
+    rows: 4,
+    cols: 7, // Will be overridden by scale length
+    baseOctave: 2,
+  });
+
+  return {
+    subscribe,
+    setInstrument: (instrument: Exclude<InstrumentType, 'drums' | 'percussion'>) =>
+      update(c => ({ ...c, instrument })),
+    setBaseOctave: (baseOctave: number) =>
+      update(c => ({ ...c, baseOctave })),
+    reset: () => set({ instrument: 'keys', rows: 8, cols: 8, baseOctave: 3 }),
+  };
+}
+
+export const padConfig = createPadConfigStore();

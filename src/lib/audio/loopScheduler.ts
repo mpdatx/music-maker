@@ -81,46 +81,82 @@ class LoopScheduler {
     }
   }
 
-  stopLoopAtEnd(trackId: string): void {
+  stopLoopAtEnd(trackId: string, onStop?: () => void): void {
     const key = this.getLoopKey(trackId);
     const scheduled = this.scheduledLoops.get(key);
     if (scheduled) {
-      // Calculate next loop boundary
       const transport = Tone.getTransport();
-      const bars = scheduled.loop.bars;
-      const currentPosition = transport.position as string;
-      // Stop at next loop boundary (Tone.js handles this)
-      scheduled.part.stop(`+${bars}m`);
+      const loopBars = scheduled.loop.bars;
+
+      // Calculate time until the end of current loop iteration
+      const loopDurationSeconds = (loopBars * 4 * 60) / transport.bpm.value;
+      const currentSeconds = transport.seconds;
+      const progressSeconds = currentSeconds % loopDurationSeconds;
+      const timeUntilEnd = loopDurationSeconds - progressSeconds;
+
+      // Stop at the end of this loop iteration
+      scheduled.part.stop(`+${timeUntilEnd}`);
       // Schedule cleanup
       transport.scheduleOnce(() => {
         scheduled.part.dispose();
         this.scheduledLoops.delete(key);
-      }, `+${bars}m`);
+        onStop?.();
+      }, `+${timeUntilEnd}`);
     }
   }
 
-  queueLoop(trackId: string, loop: Loop): void {
+  queueLoop(trackId: string, loop: Loop, onStart?: () => void): void {
     const key = this.getLoopKey(trackId);
     const existing = this.scheduledLoops.get(key);
+    const transport = Tone.getTransport();
 
     if (existing) {
-      // Schedule new loop to start when current ends
-      const bars = existing.loop.bars;
-      const transport = Tone.getTransport();
+      // Calculate time until end of current loop
+      const loopBars = existing.loop.bars;
+      const loopDurationSeconds = (loopBars * 4 * 60) / transport.bpm.value;
+      const currentSeconds = transport.seconds;
+      const progressSeconds = currentSeconds % loopDurationSeconds;
+      const timeUntilEnd = loopDurationSeconds - progressSeconds;
+
       transport.scheduleOnce(() => {
         this.scheduleLoop(trackId, loop);
-      }, `+${bars}m`);
+        onStart?.();
+      }, `+${timeUntilEnd}`);
     } else {
-      // No current loop, schedule to start at next bar
-      const transport = Tone.getTransport();
+      // No current loop, schedule to start at next measure
       transport.scheduleOnce(() => {
         this.scheduleLoop(trackId, loop);
+        onStart?.();
       }, '@1m');
     }
   }
 
   isPlaying(trackId: string): boolean {
     return this.scheduledLoops.has(this.getLoopKey(trackId));
+  }
+
+  getLoopProgress(trackId: string): number {
+    const key = this.getLoopKey(trackId);
+    const scheduled = this.scheduledLoops.get(key);
+    if (!scheduled) return 0;
+
+    const transport = Tone.getTransport();
+    const loopBars = scheduled.loop.bars;
+
+    // Convert loop length to seconds
+    const loopDurationSeconds = (loopBars * 4 * 60) / transport.bpm.value;
+
+    // Get current time in seconds and find position within loop
+    const currentSeconds = transport.seconds;
+    const progressSeconds = currentSeconds % loopDurationSeconds;
+
+    return progressSeconds / loopDurationSeconds;
+  }
+
+  getActiveLoopBars(trackId: string): number {
+    const key = this.getLoopKey(trackId);
+    const scheduled = this.scheduledLoops.get(key);
+    return scheduled?.loop.bars ?? 2;
   }
 
   stopAll(): void {

@@ -1,6 +1,13 @@
 <script lang="ts">
-  import { playback, isPlaying } from '../lib/stores';
-  import { transport, initAudio } from '../lib/audio';
+  import { createEventDispatcher } from 'svelte';
+  import { playback, isPlaying, bpm } from '../lib/stores';
+  import { transport, initAudio, setMasterVolume } from '../lib/audio';
+
+  const dispatch = createEventDispatcher<{
+    stop: void;
+  }>();
+
+  let volume = 80; // 0-100 scale
 
   async function handlePlayPause() {
     await initAudio();
@@ -11,11 +18,31 @@
   function handleStop() {
     transport.stop();
     playback.reset();
+    dispatch('stop');
+  }
+
+  function handleVolumeChange(e: Event) {
+    volume = parseInt((e.target as HTMLInputElement).value);
+    // Convert 0-100 to decibels (-60 to 0)
+    const db = volume === 0 ? -Infinity : (volume / 100) * 60 - 60;
+    setMasterVolume(db);
   }
 </script>
 
 <div class="transport">
-  <button class="transport-btn" on:click={handlePlayPause}>
+  <div class="volume-control">
+    <span class="volume-icon">{volume === 0 ? '🔇' : volume < 50 ? '🔉' : '🔊'}</span>
+    <input
+      type="range"
+      min="0"
+      max="100"
+      value={volume}
+      on:input={handleVolumeChange}
+      class="volume-slider"
+    />
+  </div>
+
+  <button class="transport-btn play-btn" class:playing={$isPlaying} on:click={handlePlayPause}>
     {#if $isPlaying}
       <span class="icon">⏸</span>
     {:else}
@@ -23,9 +50,13 @@
     {/if}
   </button>
 
-  <button class="transport-btn" on:click={handleStop}>
+  <button class="transport-btn stop-btn" on:click={handleStop}>
     <span class="icon">⏹</span>
   </button>
+
+  <div class="bpm-display">
+    {$bpm} BPM
+  </div>
 </div>
 
 <style>
@@ -37,6 +68,7 @@
     padding: 1rem;
     background: #1a1a2e;
     border-top: 1px solid #333;
+    position: relative;
   }
 
   .transport-btn {
@@ -60,5 +92,65 @@
 
   .icon {
     font-size: 1.25rem;
+  }
+
+  .play-btn.playing {
+    background: #4ade80;
+    border-color: #4ade80;
+    color: #1a1a2e;
+  }
+
+  .stop-btn:hover {
+    background: #f87171;
+    border-color: #f87171;
+  }
+
+  .bpm-display {
+    position: absolute;
+    right: 1rem;
+    font-size: 0.875rem;
+    color: #888;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .volume-control {
+    position: absolute;
+    left: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .volume-icon {
+    font-size: 1rem;
+  }
+
+  .volume-slider {
+    width: 80px;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #444;
+    border-radius: 2px;
+    cursor: pointer;
+  }
+
+  .volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: #fff;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .volume-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: #fff;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
   }
 </style>

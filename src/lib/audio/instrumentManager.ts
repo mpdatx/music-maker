@@ -1,5 +1,5 @@
 import * as Tone from 'tone';
-import type { InstrumentType } from '../types';
+import type { InstrumentType, GenrePreset } from '../types';
 import { createDrumKit, connectDrumKit, disposeDrumKit, type DrumKit } from './instruments/drums';
 import { createMelodicSynth, type MelodicSynth } from './instruments/melodic';
 
@@ -13,24 +13,26 @@ class InstrumentManager {
   private instruments: Map<string, TrackInstrument> = new Map();
   private master: Tone.Channel;
   private limiter: Tone.Limiter;
+  private currentGenre: GenrePreset = 'lofi-hiphop';
 
   constructor() {
     this.limiter = new Tone.Limiter(-1).toDestination();
     this.master = new Tone.Channel().connect(this.limiter);
   }
 
-  createTrackInstrument(trackId: string, type: InstrumentType): TrackInstrument {
+  createTrackInstrument(trackId: string, type: InstrumentType, genre?: GenrePreset): TrackInstrument {
     // Dispose existing if any
     this.disposeTrackInstrument(trackId);
 
+    const useGenre = genre ?? this.currentGenre;
     const channel = new Tone.Channel().connect(this.master);
 
     let synth: DrumKit | MelodicSynth;
     if (type === 'drums' || type === 'percussion') {
-      synth = createDrumKit();
+      synth = createDrumKit(useGenre);
       connectDrumKit(synth as DrumKit, channel);
     } else {
-      synth = createMelodicSynth(type);
+      synth = createMelodicSynth(type, useGenre);
       (synth as MelodicSynth).connect(channel);
     }
 
@@ -87,6 +89,37 @@ class InstrumentManager {
     }
     this.master.dispose();
     this.limiter.dispose();
+  }
+
+  setGenre(genre: GenrePreset): void {
+    if (genre === this.currentGenre) return;
+
+    this.currentGenre = genre;
+
+    // Recreate all instruments with the new genre
+    // Store current settings before disposing
+    const trackSettings: Map<string, { type: InstrumentType; volume: number; pan: number; muted: boolean }> = new Map();
+
+    for (const [trackId, instrument] of this.instruments.entries()) {
+      trackSettings.set(trackId, {
+        type: instrument.type,
+        volume: Tone.dbToGain(instrument.channel.volume.value),
+        pan: instrument.channel.pan.value,
+        muted: instrument.channel.mute,
+      });
+    }
+
+    // Recreate each instrument with new genre presets
+    for (const [trackId, settings] of trackSettings.entries()) {
+      this.createTrackInstrument(trackId, settings.type, genre);
+      this.setTrackVolume(trackId, settings.volume);
+      this.setTrackPan(trackId, settings.pan);
+      this.setTrackMute(trackId, settings.muted);
+    }
+  }
+
+  getGenre(): GenrePreset {
+    return this.currentGenre;
   }
 }
 
