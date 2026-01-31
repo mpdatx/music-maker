@@ -1,85 +1,62 @@
-import type { Note, GenerationParams, ChordDegree, LoopBundle, LoopVariation } from '../types';
+import type { Note, GenerationParams, ChordDegree, LoopBundle, LoopVariation, GenrePreset } from '../types';
 import { SeededRandom, getNoteInScale, resolveChordDegree } from './theory';
-
-const BASS_PATTERNS = [
-  // Steady root
-  [0, 4, 8, 12],
-  // Syncopated
-  [0, 3, 6, 10, 14],
-  // Octave jump
-  [0, 0, 8, 8],
-  // Funk
-  [0, 3, 4, 7, 10, 12],
-];
+import { getRhythmSteps, getGrooveProfile, applyGroove } from './rhythm';
 
 /**
- * Generate bass notes for a single chord variation
+ * Generate bass notes for a single chord variation using the rhythm pipeline.
+ * The pipeline provides rhythm positions with dynamics; this function adds pitch logic.
  */
 function generateBassVariation(
   params: GenerationParams,
   key: string,
   scale: string,
   chordDegree: ChordDegree,
-  rng: SeededRandom,
+  genre: GenrePreset,
+  seed: number,
   bars: number
 ): Note[] {
-  const stepsPerBar = 16;
   const notes: Note[] = [];
   const octave = 2;
+  const rng = new SeededRandom(seed);
 
   // Resolve the chord degree to a scale degree (0-6)
   const rootDegree = resolveChordDegree(chordDegree, key, scale);
 
-  // Pick base pattern
-  const pattern = rng.pick(BASS_PATTERNS);
+  // Get rhythm steps from the pipeline (includes transformations, dynamics, humanization)
+  const steps = getRhythmSteps('bass', genre, params, seed);
 
   for (let bar = 0; bar < bars; bar++) {
-    for (const step of pattern) {
-      const time = `${bar}:0:${step * 0.25}`;
+    for (const step of steps) {
+      const time = `${bar}:0:${step.position * 0.25}`;
 
       // Root note most of the time
       let degree = rootDegree;
 
-      // Add variation based on complexity
+      // Add variation based on complexity and step characteristics
       if (params.complexity > 0.3 && rng.chance(params.complexity * 0.4)) {
         // Sometimes play third, fifth, or octave relative to chord root
         degree += rng.pick([0, 2, 4, 7]);
       }
 
-      const pitch = getNoteInScale(key, scale, degree, octave);
+      // Ghost notes tend to play passing tones
+      if (step.ghost && rng.chance(0.6)) {
+        degree += rng.pick([1, -1, 2, -2]);
+      }
 
-      // Vary duration based on density
-      const durations = ['4n', '8n', '8n.'];
-      const duration = params.density > 0.6 ? rng.pick(durations) : '4n';
+      const pitch = getNoteInScale(key, scale, degree, octave);
 
       notes.push({
         pitch,
         time,
-        duration,
-        velocity: 0.8 + rng.next() * 0.15,
+        duration: step.duration,
+        velocity: step.velocity,
       });
-    }
-
-    // Fill notes based on density
-    if (params.density > 0.5) {
-      const fillCount = Math.floor(params.density * 3);
-      for (let i = 0; i < fillCount; i++) {
-        const step = rng.nextInt(0, stepsPerBar - 1);
-        if (!pattern.includes(step)) {
-          const time = `${bar}:0:${step * 0.25}`;
-          const degree = rootDegree + rng.pick([0, 2, 4]);
-          notes.push({
-            pitch: getNoteInScale(key, scale, degree, octave),
-            time,
-            duration: '16n',
-            velocity: 0.6 + rng.next() * 0.2,
-          });
-        }
-      }
     }
   }
 
-  return notes;
+  // Apply groove (swing and timing)
+  const grooveProfile = getGrooveProfile(genre);
+  return applyGroove(notes, grooveProfile);
 }
 
 /**
@@ -91,15 +68,15 @@ export function generateBassBundle(
   scale: string,
   progression: ChordDegree[],
   seed: number,
-  bars = 2
+  bars = 2,
+  genre: GenrePreset = 'pop'
 ): LoopBundle {
   const variations: LoopVariation[] = [];
 
   for (let i = 0; i < progression.length; i++) {
-    // Create a new RNG for each variation using the same seed offset pattern
-    // This ensures reproducibility
-    const rng = new SeededRandom(seed + i * 1000);
-    const notes = generateBassVariation(params, key, scale, progression[i], rng, bars);
+    // Use offset seed for each variation to ensure reproducibility
+    const variationSeed = seed + i * 1000;
+    const notes = generateBassVariation(params, key, scale, progression[i], genre, variationSeed, bars);
     variations.push({
       chordIndex: i,
       notes,
@@ -126,8 +103,9 @@ export function generateBassLine(
   key: string,
   scale: string,
   seed: number,
-  bars = 2
+  bars = 2,
+  genre: GenrePreset = 'pop'
 ): Note[] {
-  const bundle = generateBassBundle(params, key, scale, ['I'], seed, bars);
+  const bundle = generateBassBundle(params, key, scale, ['I'], seed, bars, genre);
   return bundle.variations[0].notes;
 }

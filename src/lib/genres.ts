@@ -109,7 +109,7 @@ export const GENRES = {
   'jazz': {
     name: 'Jazz',
     bpmRange: [110, 140] as [number, number],
-    key: 'Bb',
+    key: 'A#',  // Bb enharmonic - theory module uses sharps only
     scale: 'dorian' as ScaleType,
     swing: 0.5,
     defaultParams: { density: 0.5, complexity: 0.7, swing: 0.5, style: 'swung' } as GenerationParams,

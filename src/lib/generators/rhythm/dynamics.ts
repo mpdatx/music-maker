@@ -46,6 +46,48 @@ const GENRE_DYNAMIC_RULES: Record<GenrePreset, DynamicRules> = {
     accentPositions: [0, 4, 8, 12],
     ghostPositions: [2, 6, 10, 14],
   },
+  'jazz': {
+    downbeatBoost: 0.05,
+    backbeatBoost: 0.08,
+    phraseContour: 'arc',
+    accentPositions: [0, 8],
+    ghostPositions: [3, 7, 11, 15],
+  },
+  'classical': {
+    downbeatBoost: 0.06,
+    backbeatBoost: 0.03,
+    phraseContour: 'swell',
+    accentPositions: [0],
+    ghostPositions: [],
+  },
+  'bossa-nova': {
+    downbeatBoost: 0.05,
+    backbeatBoost: 0.06,
+    phraseContour: 'arc',
+    accentPositions: [0, 6, 10],
+    ghostPositions: [3, 14],
+  },
+  'blues': {
+    downbeatBoost: 0.06,
+    backbeatBoost: 0.1,
+    phraseContour: 'arc',
+    accentPositions: [0, 4, 8, 12],
+    ghostPositions: [3, 7, 11, 15],
+  },
+  'reggae': {
+    downbeatBoost: 0.03,
+    backbeatBoost: 0.12,
+    phraseContour: 'flat',
+    accentPositions: [6, 14],
+    ghostPositions: [2, 10],
+  },
+  'cinematic': {
+    downbeatBoost: 0.1,
+    backbeatBoost: 0.05,
+    phraseContour: 'swell',
+    accentPositions: [0, 8],
+    ghostPositions: [],
+  },
 };
 
 export function getDynamicRules(genre: GenrePreset): DynamicRules {

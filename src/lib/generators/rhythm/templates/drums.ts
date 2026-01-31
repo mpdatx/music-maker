@@ -78,6 +78,51 @@ const AMBIENT_TEMPLATES: RhythmTemplate[] = [
   drumTemplate('ambient-build', 'Building', 'ambient', 'high', 'straight', [0, 4, 8, 12], [4, 12], [0, 2, 4, 6, 8, 10, 12, 14]),
 ];
 
+const JAZZ_TEMPLATES: RhythmTemplate[] = [
+  drumTemplate('jazz-brush', 'Brush Swing', 'jazz', 'low', 'swung', [0, 8], [4, 12], [0, 3, 4, 7, 8, 11, 12, 15]),
+  drumTemplate('jazz-ride', 'Ride Swing', 'jazz', 'mid', 'swung', [0, 8], [4, 12], [0, 2, 3, 4, 6, 7, 8, 10, 11, 12, 14, 15]),
+  drumTemplate('jazz-bebop', 'Bebop', 'jazz', 'mid', 'swung', [0, 6, 10], [4, 12], [0, 2, 3, 4, 6, 7, 8, 10, 11, 12, 14, 15]),
+  drumTemplate('jazz-latin', 'Latin Jazz', 'jazz', 'mid', 'syncopated', [0, 3, 6, 10], [4, 12], [0, 2, 4, 6, 8, 10, 12, 14]),
+  drumTemplate('jazz-uptempo', 'Uptempo Swing', 'jazz', 'high', 'swung', [0, 4, 8, 12], [4, 12], [0, 2, 3, 4, 6, 7, 8, 10, 11, 12, 14, 15]),
+];
+
+const CLASSICAL_TEMPLATES: RhythmTemplate[] = [
+  drumTemplate('classical-sparse', 'Sparse', 'classical', 'low', 'straight', [0], [], []),
+  drumTemplate('classical-timpani', 'Timpani', 'classical', 'low', 'straight', [0, 8], [], []),
+  drumTemplate('classical-march', 'March', 'classical', 'mid', 'straight', [0, 4, 8, 12], [4, 12], []),
+  drumTemplate('classical-waltz', 'Waltz Feel', 'classical', 'mid', 'straight', [0], [4, 8], []),
+  drumTemplate('classical-dramatic', 'Dramatic', 'classical', 'high', 'straight', [0, 4, 8, 12], [4, 12], [0, 4, 8, 12]),
+];
+
+const BOSSA_NOVA_TEMPLATES: RhythmTemplate[] = [
+  drumTemplate('bossa-basic', 'Basic Bossa', 'bossa-nova', 'low', 'swung', [0, 8], [], [0, 2, 4, 6, 8, 10, 12, 14]),
+  drumTemplate('bossa-classic', 'Classic Bossa', 'bossa-nova', 'mid', 'swung', [0, 6, 10], [4, 12], [0, 2, 4, 6, 8, 10, 12, 14]),
+  drumTemplate('bossa-partido', 'Partido Alto', 'bossa-nova', 'mid', 'syncopated', [0, 3, 6, 10, 14], [4, 12], [0, 2, 4, 6, 8, 10, 12, 14]),
+  drumTemplate('bossa-samba', 'Samba Feel', 'bossa-nova', 'high', 'syncopated', [0, 3, 6, 8, 10, 13], [4, 12], [0, 2, 4, 6, 8, 10, 12, 14]),
+];
+
+const BLUES_TEMPLATES: RhythmTemplate[] = [
+  drumTemplate('blues-slow', 'Slow Blues', 'blues', 'low', 'swung', [0, 8], [4, 12], [0, 3, 4, 7, 8, 11, 12, 15]),
+  drumTemplate('blues-shuffle', 'Blues Shuffle', 'blues', 'mid', 'swung', [0, 8], [4, 12], [0, 3, 4, 7, 8, 11, 12, 15]),
+  drumTemplate('blues-chicago', 'Chicago Blues', 'blues', 'mid', 'swung', [0, 6, 8, 14], [4, 12], [0, 3, 4, 7, 8, 11, 12, 15]),
+  drumTemplate('blues-boogie', 'Boogie', 'blues', 'high', 'swung', [0, 3, 8, 11], [4, 12], [0, 2, 4, 6, 8, 10, 12, 14]),
+];
+
+const REGGAE_TEMPLATES: RhythmTemplate[] = [
+  drumTemplate('reggae-one-drop', 'One Drop', 'reggae', 'low', 'straight', [0], [12], [0, 4, 8, 12]),
+  drumTemplate('reggae-roots', 'Roots', 'reggae', 'mid', 'straight', [0, 12], [6, 14], [2, 6, 10, 14]),
+  drumTemplate('reggae-steppers', 'Steppers', 'reggae', 'mid', 'straight', [0, 4, 8, 12], [4, 12], [2, 6, 10, 14]),
+  drumTemplate('reggae-dancehall', 'Dancehall', 'reggae', 'high', 'syncopated', [0, 3, 6, 10, 12], [4, 14], [2, 6, 10, 14]),
+];
+
+const CINEMATIC_TEMPLATES: RhythmTemplate[] = [
+  drumTemplate('cinematic-sparse', 'Sparse Tension', 'cinematic', 'low', 'straight', [0], [], []),
+  drumTemplate('cinematic-pulse', 'Pulse', 'cinematic', 'low', 'straight', [0, 8], [], []),
+  drumTemplate('cinematic-march', 'Epic March', 'cinematic', 'mid', 'straight', [0, 4, 8, 12], [], [0, 4, 8, 12]),
+  drumTemplate('cinematic-tension', 'Tension Build', 'cinematic', 'mid', 'straight', [0, 6, 10], [12], [0, 2, 4, 6, 8, 10, 12, 14]),
+  drumTemplate('cinematic-epic', 'Epic Drums', 'cinematic', 'high', 'straight', [0, 4, 8, 12], [4, 12], [0, 2, 4, 6, 8, 10, 12, 14]),
+];
+
 const DRUM_TEMPLATES: Record<GenrePreset, RhythmTemplate[]> = {
   'lofi-hiphop': LOFI_TEMPLATES,
   'edm-house': EDM_TEMPLATES,
@@ -85,10 +130,17 @@ const DRUM_TEMPLATES: Record<GenrePreset, RhythmTemplate[]> = {
   'funk': FUNK_TEMPLATES,
   'pop': POP_TEMPLATES,
   'ambient': AMBIENT_TEMPLATES,
+  'jazz': JAZZ_TEMPLATES,
+  'classical': CLASSICAL_TEMPLATES,
+  'bossa-nova': BOSSA_NOVA_TEMPLATES,
+  'blues': BLUES_TEMPLATES,
+  'reggae': REGGAE_TEMPLATES,
+  'cinematic': CINEMATIC_TEMPLATES,
 };
 
 export function getDrumTemplates(genre: GenrePreset): RhythmTemplate[] {
-  return DRUM_TEMPLATES[genre] || [];
+  // Use pop templates as fallback for undefined genres
+  return DRUM_TEMPLATES[genre] ?? POP_TEMPLATES;
 }
 
 export function getDrumTemplatesByEnergy(genre: GenrePreset, energy: EnergyLevel): RhythmTemplate[] {

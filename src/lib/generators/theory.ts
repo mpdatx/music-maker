@@ -97,7 +97,7 @@ export function clampAndQuantizeNote(note: string, minMidi: number, maxMidi: num
 }
 
 // Check if a note is available for a given instrument
-// Returns true for synth instruments (always available) or sampled instruments within range
+// Returns true for synth instruments (always available) or sampled instruments with that sample
 export function isNoteAvailableForInstrument(
   note: string,
   instrumentType: string,
@@ -108,7 +108,17 @@ export function isNoteAvailableForInstrument(
 
   const midi = noteToMidi(note);
   const [minMidi, maxMidi] = range;
-  return midi >= minMidi && midi <= maxMidi;
+
+  // First check if within overall range
+  if (midi < minMidi || midi > maxMidi) return false;
+
+  // For sparse instruments, also check if this specific note has a sample
+  const sparseNotes = SPARSE_INSTRUMENT_SAMPLES[instrumentType];
+  if (sparseNotes) {
+    return sparseNotes.includes(midi);
+  }
+
+  return true;
 }
 
 export const SCALES: Record<string, number[]> = {

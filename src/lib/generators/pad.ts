@@ -1,76 +1,46 @@
-import type { Note, GenerationParams, ChordDegree, LoopBundle, LoopVariation } from '../types';
+import type { Note, GenerationParams, ChordDegree, LoopBundle, LoopVariation, GenrePreset } from '../types';
 import { SeededRandom, getChordNotes, getChordTonesForDegree } from './theory';
+import { getArticulationProfile, getGrooveProfile, applyGroove } from './rhythm';
 
 export function generatePad(
   params: GenerationParams,
   key: string,
   scale: string,
   seed: number,
-  bars = 2
+  bars = 2,
+  genre: GenrePreset = 'electronic'
 ): Note[] {
-  const rng = new SeededRandom(seed);
-  const notes: Note[] = [];
-  const octave = 4;
-
-  // Pads are typically sustained chords
-  // Change chord every bar or every 2 bars
-  const changeEvery = params.complexity > 0.5 ? 1 : 2;
-
-  const progression = [0, 3, 4, 0];
-
-  for (let bar = 0; bar < bars; bar += changeEvery) {
-    const degree = progression[(bar / changeEvery) % progression.length];
-    const chordNotes = getChordNotes(key, scale, degree, octave);
-
-    const time = `${bar}:0:0`;
-    const duration = changeEvery === 1 ? '1m' : '2m';
-
-    // Add chord notes with slight timing offset for richness
-    for (let i = 0; i < chordNotes.length; i++) {
-      const offset = params.complexity > 0.3 ? i * 0.01 : 0;
-      notes.push({
-        pitch: chordNotes[i],
-        time: bar === 0 && i === 0 ? time : `${bar}:0:${offset}`,
-        duration,
-        velocity: 0.4 + rng.next() * 0.1,
-      });
-    }
-
-    // Add higher octave for airiness based on density
-    if (params.density > 0.6) {
-      const highNote = chordNotes[0].replace(/\d/, (d) => String(parseInt(d) + 1));
-      notes.push({
-        pitch: highNote,
-        time,
-        duration,
-        velocity: 0.3,
-      });
-    }
-  }
-
-  return notes;
+  const bundle = generatePadBundle(params, key, scale, ['I'], seed, bars, genre);
+  return bundle.variations[0].notes;
 }
 
 /**
  * Generate pad notes for a single chord variation.
  * Pads are sustained chords that provide harmonic foundation.
+ * Uses articulation profile for velocity dynamics.
  */
 function generatePadVariation(
   params: GenerationParams,
   key: string,
   scale: string,
   chordDegree: ChordDegree,
-  rng: SeededRandom,
+  genre: GenrePreset,
+  seed: number,
   bars: number
 ): Note[] {
   const notes: Note[] = [];
   const octave = 4;
+  const rng = new SeededRandom(seed);
+
+  // Get articulation profile for velocity range
+  const artProfile = getArticulationProfile(genre);
+  const [velMin, velMax] = artProfile.velocityRange;
+  const padVelRange = [(velMin + velMax) / 2 * 0.6, (velMin + velMax) / 2 * 0.8]; // Pads are softer
 
   // Get chord tones for this degree
   const chordNotes = getChordTonesForDegree(chordDegree, key, scale, octave);
 
   // Pads are sustained - use long durations
-  // For 2 bars, use 2 measures; for 1 bar, use 1 measure
   const duration = bars >= 2 ? '1m' : '2n';
 
   // Add each note of the chord
@@ -83,7 +53,7 @@ function generatePadVariation(
       pitch: chordNotes[i],
       time,
       duration,
-      velocity: 0.4 + rng.next() * 0.1,
+      velocity: padVelRange[0] + rng.next() * (padVelRange[1] - padVelRange[0]),
     });
   }
 
@@ -94,13 +64,12 @@ function generatePadVariation(
       pitch: highNote,
       time: '0:0:0',
       duration,
-      velocity: 0.3,
+      velocity: padVelRange[0] * 0.8,
     });
   }
 
   // For higher complexity, add movement within the sustained chord
   if (params.complexity > 0.7 && bars >= 2) {
-    // Add a second voicing at the halfway point
     const halfwayTime = '1:0:0';
     const secondDuration = '1m';
 
@@ -112,12 +81,14 @@ function generatePadVariation(
         pitch: chordNotes[i],
         time,
         duration: secondDuration,
-        velocity: 0.35 + rng.next() * 0.1,
+        velocity: padVelRange[0] * 0.9 + rng.next() * (padVelRange[1] - padVelRange[0]) * 0.5,
       });
     }
   }
 
-  return notes;
+  // Apply groove for subtle timing humanization
+  const grooveProfile = getGrooveProfile(genre);
+  return applyGroove(notes, grooveProfile);
 }
 
 /**
@@ -130,15 +101,15 @@ export function generatePadBundle(
   scale: string,
   progression: ChordDegree[],
   seed: number,
-  bars = 2
+  bars = 2,
+  genre: GenrePreset = 'electronic'
 ): LoopBundle {
   const variations: LoopVariation[] = [];
 
   for (let i = 0; i < progression.length; i++) {
-    // Create a new RNG for each variation using the same seed offset pattern
-    // This ensures reproducibility
-    const rng = new SeededRandom(seed + i * 1000);
-    const notes = generatePadVariation(params, key, scale, progression[i], rng, bars);
+    // Use offset seed for each variation to ensure reproducibility
+    const variationSeed = seed + i * 1000;
+    const notes = generatePadVariation(params, key, scale, progression[i], genre, variationSeed, bars);
     variations.push({
       chordIndex: i,
       notes,

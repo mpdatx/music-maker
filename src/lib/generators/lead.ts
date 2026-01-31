@@ -1,5 +1,6 @@
-import type { Note, GenerationParams, ChordDegree, LoopBundle, LoopVariation } from '../types';
+import type { Note, GenerationParams, ChordDegree, LoopBundle, LoopVariation, GenrePreset } from '../types';
 import { SeededRandom, getNoteInScale, getChordTonesForDegree, resolveChordDegree } from './theory';
+import { getRhythmSteps, getGrooveProfile, applyGroove } from './rhythm';
 
 type Contour = 'ascending' | 'descending' | 'arch' | 'flat';
 
@@ -8,98 +9,30 @@ export function generateLead(
   key: string,
   scale: string,
   seed: number,
-  bars = 2
+  bars = 2,
+  genre: GenrePreset = 'pop'
 ): Note[] {
-  const rng = new SeededRandom(seed);
-  const stepsPerBar = 16;
-  const notes: Note[] = [];
-  const octave = 5;
-
-  // Pick contour
-  const contours: Contour[] = ['ascending', 'descending', 'arch', 'flat'];
-  const contour = rng.pick(contours);
-
-  // Determine note density based on params
-  const notesPerBar = Math.floor(2 + params.density * 6);
-
-  for (let bar = 0; bar < bars; bar++) {
-    let currentDegree = rng.nextInt(0, 4);
-    const barNotes: { step: number; degree: number }[] = [];
-
-    // Generate note positions
-    for (let i = 0; i < notesPerBar; i++) {
-      const step = Math.floor((i / notesPerBar) * stepsPerBar);
-
-      // Apply contour
-      let degreeOffset = 0;
-      const progress = i / notesPerBar;
-
-      switch (contour) {
-        case 'ascending':
-          degreeOffset = Math.floor(progress * 4);
-          break;
-        case 'descending':
-          degreeOffset = Math.floor((1 - progress) * 4);
-          break;
-        case 'arch':
-          degreeOffset = Math.floor(Math.sin(progress * Math.PI) * 4);
-          break;
-        case 'flat':
-          degreeOffset = 0;
-          break;
-      }
-
-      // Add some randomness based on complexity
-      if (params.complexity > 0.3) {
-        degreeOffset += rng.nextInt(-2, 2);
-      }
-
-      barNotes.push({ step, degree: currentDegree + degreeOffset });
-    }
-
-    // Create notes
-    for (let i = 0; i < barNotes.length; i++) {
-      const { step, degree } = barNotes[i];
-      const nextStep = barNotes[i + 1]?.step ?? stepsPerBar;
-
-      const time = `${bar}:0:${step * 0.25}`;
-      const pitch = getNoteInScale(key, scale, degree, octave);
-
-      // Calculate duration
-      const gapSteps = nextStep - step;
-      let duration = '8n';
-      if (gapSteps >= 8) duration = '4n';
-      if (gapSteps >= 4 && gapSteps < 8) duration = '8n';
-      if (gapSteps < 4) duration = '16n';
-
-      notes.push({
-        pitch,
-        time,
-        duration,
-        velocity: 0.7 + rng.next() * 0.2,
-      });
-    }
-  }
-
-  return notes;
+  const bundle = generateLeadBundle(params, key, scale, ['I'], seed, bars, genre);
+  return bundle.variations[0].notes;
 }
 
 /**
- * Generate lead notes for a single chord variation.
- * Emphasizes chord tones on strong beats (step % 4 === 0)
- * and allows passing tones from the scale on weak beats.
+ * Generate lead notes for a single chord variation using the rhythm pipeline.
+ * Emphasizes chord tones on strong beats and allows passing tones on weak beats.
+ * The pipeline provides rhythm positions with dynamics; this function adds melodic contour.
  */
 function generateLeadVariation(
   params: GenerationParams,
   key: string,
   scale: string,
   chordDegree: ChordDegree,
-  rng: SeededRandom,
+  genre: GenrePreset,
+  seed: number,
   bars: number
 ): Note[] {
-  const stepsPerBar = 16;
   const notes: Note[] = [];
   const octave = 5;
+  const rng = new SeededRandom(seed);
 
   // Get chord tones for this chord degree
   const chordTones = getChordTonesForDegree(chordDegree, key, scale, octave);
@@ -109,20 +42,19 @@ function generateLeadVariation(
   const contours: Contour[] = ['ascending', 'descending', 'arch', 'flat'];
   const contour = rng.pick(contours);
 
-  // Determine note density based on params
-  const notesPerBar = Math.floor(2 + params.density * 6);
+  // Get rhythm steps from the pipeline
+  const steps = getRhythmSteps('lead', genre, params, seed);
 
   for (let bar = 0; bar < bars; bar++) {
-    const barNotes: { step: number; degree: number; isStrongBeat: boolean }[] = [];
+    // Apply contour to the rhythm steps
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
+      const time = `${bar}:0:${step.position * 0.25}`;
+      const isStrongBeat = step.position % 4 === 0;
 
-    // Generate note positions
-    for (let i = 0; i < notesPerBar; i++) {
-      const step = Math.floor((i / notesPerBar) * stepsPerBar);
-      const isStrongBeat = step % 4 === 0;
-
-      // Apply contour
+      // Calculate contour-based degree offset
+      const progress = i / steps.length;
       let degreeOffset = 0;
-      const progress = i / notesPerBar;
 
       switch (contour) {
         case 'ascending':
@@ -139,50 +71,40 @@ function generateLeadVariation(
           break;
       }
 
-      // Add some randomness based on complexity
+      // Add randomness based on complexity
       if (params.complexity > 0.3) {
         degreeOffset += rng.nextInt(-2, 2);
       }
 
-      barNotes.push({ step, degree: degreeOffset, isStrongBeat });
-    }
-
-    // Create notes
-    for (let i = 0; i < barNotes.length; i++) {
-      const { step, degree, isStrongBeat } = barNotes[i];
-      const nextStep = barNotes[i + 1]?.step ?? stepsPerBar;
-
-      const time = `${bar}:0:${step * 0.25}`;
+      // Ghost notes tend to be chromatic passing tones
+      if (step.ghost) {
+        degreeOffset += rng.pick([-1, 1]);
+      }
 
       let pitch: string;
 
-      if (isStrongBeat) {
-        // On strong beats, use chord tones
-        const chordToneIndex = ((degree % chordTones.length) + chordTones.length) % chordTones.length;
+      if (isStrongBeat || step.accent) {
+        // On strong beats or accented notes, use chord tones
+        const chordToneIndex = ((degreeOffset % chordTones.length) + chordTones.length) % chordTones.length;
         pitch = chordTones[chordToneIndex];
       } else {
         // On weak beats, use scale tones (passing tones)
-        const scaleDegree = rootDegree + degree;
+        const scaleDegree = rootDegree + degreeOffset;
         pitch = getNoteInScale(key, scale, scaleDegree, octave);
       }
-
-      // Calculate duration
-      const gapSteps = nextStep - step;
-      let duration = '8n';
-      if (gapSteps >= 8) duration = '4n';
-      if (gapSteps >= 4 && gapSteps < 8) duration = '8n';
-      if (gapSteps < 4) duration = '16n';
 
       notes.push({
         pitch,
         time,
-        duration,
-        velocity: 0.7 + rng.next() * 0.2,
+        duration: step.duration,
+        velocity: step.velocity,
       });
     }
   }
 
-  return notes;
+  // Apply groove
+  const grooveProfile = getGrooveProfile(genre);
+  return applyGroove(notes, grooveProfile);
 }
 
 /**
@@ -196,15 +118,15 @@ export function generateLeadBundle(
   scale: string,
   progression: ChordDegree[],
   seed: number,
-  bars = 2
+  bars = 2,
+  genre: GenrePreset = 'pop'
 ): LoopBundle {
   const variations: LoopVariation[] = [];
 
   for (let i = 0; i < progression.length; i++) {
-    // Create a new RNG for each variation using the same seed offset pattern
-    // This ensures reproducibility
-    const rng = new SeededRandom(seed + i * 1000);
-    const notes = generateLeadVariation(params, key, scale, progression[i], rng, bars);
+    // Use offset seed for each variation to ensure reproducibility
+    const variationSeed = seed + i * 1000;
+    const notes = generateLeadVariation(params, key, scale, progression[i], genre, variationSeed, bars);
     variations.push({
       chordIndex: i,
       notes,

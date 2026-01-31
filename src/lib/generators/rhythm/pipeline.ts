@@ -49,24 +49,28 @@ function stepsToNotes(
   return notes;
 }
 
-export function processRhythm(
+/**
+ * Get processed rhythm steps with all transformations applied.
+ * Returns TemplateSteps that can be used by generators to apply their own pitch logic.
+ */
+export function getRhythmSteps(
   instrument: InstrumentType,
   genre: GenrePreset,
   params: GenerationParams,
-  seed: number,
-  bars: number
-): Note[] {
+  seed: number
+): TemplateStep[] {
   const rng = new SeededRandom(seed);
   const energy = densityToEnergy(params.density);
 
-  // Get templates
+  // Get templates based on instrument type
   let templates;
   if (instrument === 'drums' || instrument === 'percussion') {
     templates = getDrumTemplates(genre).filter(t => t.energyLevel === energy);
-  } else if (instrument === 'bass' || instrument === 'bass-electric') {
+  } else if (instrument === 'bass' || instrument === 'bass-electric' || instrument === 'contrabass' || instrument === 'tuba') {
     templates = getBassTemplates(genre).filter(t => t.energyLevel === energy);
   } else {
-    templates = getDrumTemplates(genre).filter(t => t.energyLevel === energy);
+    // For other instruments, use bass templates as a melodic base
+    templates = getBassTemplates(genre).filter(t => t.energyLevel === energy);
   }
 
   if (templates.length === 0) {
@@ -88,6 +92,18 @@ export function processRhythm(
 
   // Apply humanization
   steps = applyHumanization(steps, articulationProfile, rng);
+
+  return steps;
+}
+
+export function processRhythm(
+  instrument: InstrumentType,
+  genre: GenrePreset,
+  params: GenerationParams,
+  seed: number,
+  bars: number
+): Note[] {
+  const steps = getRhythmSteps(instrument, genre, params, seed);
 
   // Convert steps to notes for each bar
   const allNotes: Note[] = [];

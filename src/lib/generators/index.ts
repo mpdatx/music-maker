@@ -66,7 +66,8 @@ export function generateLoop(
   key: string,
   scale: string,
   seed?: number,
-  bars = 2
+  bars = 2,
+  genre: GenrePreset = 'pop'
 ): Loop {
   const actualSeed = seed ?? Math.floor(Math.random() * 1000000);
 
@@ -83,7 +84,7 @@ export function generateLoop(
     case 'bass-electric':
     case 'contrabass':
     case 'tuba':
-      notes = generateBassLine(params, key, scale, actualSeed, bars);
+      notes = generateBassLine(params, key, scale, actualSeed, bars, genre);
       break;
 
     // Chord/keys instruments
@@ -92,7 +93,7 @@ export function generateLoop(
     case 'organ-sampled':
     case 'harmonium':
     case 'epiano':
-      notes = generateChords(params, key, scale, actualSeed, bars);
+      notes = generateChords(params, key, scale, actualSeed, bars, genre);
       break;
 
     // Lead/melody instruments
@@ -102,7 +103,7 @@ export function generateLoop(
     case 'flute':
     case 'clarinet':
     case 'violin':
-      notes = generateLead(params, key, scale, actualSeed, bars);
+      notes = generateLead(params, key, scale, actualSeed, bars, genre);
       break;
 
     // Pad/sustain instruments
@@ -111,7 +112,7 @@ export function generateLoop(
     case 'cello':
     case 'french-horn':
     case 'trombone':
-      notes = generatePad(params, key, scale, actualSeed, bars);
+      notes = generatePad(params, key, scale, actualSeed, bars, genre);
       break;
 
     // Pluck/arp instruments
@@ -210,7 +211,7 @@ export function generateLoopBundle(
     case 'bass-electric':
     case 'contrabass':
     case 'tuba':
-      bundle = generateBassBundle(params, key, scale, chords, seed, bars);
+      bundle = generateBassBundle(params, key, scale, chords, seed, bars, genre);
       break;
 
     // Chord/keys instruments
@@ -219,7 +220,7 @@ export function generateLoopBundle(
     case 'organ-sampled':
     case 'harmonium':
     case 'epiano':
-      bundle = generateChordsBundle(params, key, scale, chords, seed, bars);
+      bundle = generateChordsBundle(params, key, scale, chords, seed, bars, genre);
       break;
 
     // Lead/melody instruments
@@ -229,7 +230,7 @@ export function generateLoopBundle(
     case 'flute':
     case 'clarinet':
     case 'violin':
-      bundle = generateLeadBundle(params, key, scale, chords, seed, bars);
+      bundle = generateLeadBundle(params, key, scale, chords, seed, bars, genre);
       break;
 
     // Pad/sustain instruments
@@ -238,7 +239,7 @@ export function generateLoopBundle(
     case 'cello':
     case 'french-horn':
     case 'trombone':
-      bundle = generatePadBundle(params, key, scale, chords, seed, bars);
+      bundle = generatePadBundle(params, key, scale, chords, seed, bars, genre);
       break;
 
     // Default: treat as lead (melodic instruments)
@@ -252,13 +253,18 @@ export function generateLoopBundle(
     case 'strings':
     case 'organ':
     default:
-      bundle = generateLeadBundle(params, key, scale, chords, seed, bars);
+      bundle = generateLeadBundle(params, key, scale, chords, seed, bars, genre);
       break;
   }
 
   // Set the progressionId on the returned bundle
   bundle.progressionId = progression.id;
   bundle.instrument = instrument;
+
+  // Constrain notes to instrument's sample range for each variation
+  for (const variation of bundle.variations) {
+    variation.notes = constrainNotesToRange(variation.notes, instrument);
+  }
 
   return bundle;
 }

@@ -57,8 +57,73 @@ export const ARTICULATION_PROFILES: Record<GenrePreset, ArticulationProfile> = {
     defaultNoteLengthRatio: 0.6,
     attackSharpness: 'medium',
   },
+  'jazz': {
+    genre: 'jazz',
+    velocityRange: [50, 100],
+    velocityCurve: 'dynamic',
+    accentStrength: 0.5,
+    ghostStrength: 0.6,
+    defaultNoteLengthRatio: 0.7,
+    attackSharpness: 'soft',
+  },
+  'classical': {
+    genre: 'classical',
+    velocityRange: [40, 110],
+    velocityCurve: 'dynamic',
+    accentStrength: 0.5,
+    ghostStrength: 0.3,
+    defaultNoteLengthRatio: 0.9,
+    attackSharpness: 'soft',
+  },
+  'bossa-nova': {
+    genre: 'bossa-nova',
+    velocityRange: [50, 95],
+    velocityCurve: 'dynamic',
+    accentStrength: 0.4,
+    ghostStrength: 0.5,
+    defaultNoteLengthRatio: 0.7,
+    attackSharpness: 'soft',
+  },
+  'blues': {
+    genre: 'blues',
+    velocityRange: [55, 105],
+    velocityCurve: 'dynamic',
+    accentStrength: 0.6,
+    ghostStrength: 0.5,
+    defaultNoteLengthRatio: 0.7,
+    attackSharpness: 'medium',
+  },
+  'reggae': {
+    genre: 'reggae',
+    velocityRange: [50, 100],
+    velocityCurve: 'dynamic',
+    accentStrength: 0.5,
+    ghostStrength: 0.4,
+    defaultNoteLengthRatio: 0.6,
+    attackSharpness: 'medium',
+  },
+  'cinematic': {
+    genre: 'cinematic',
+    velocityRange: [40, 120],
+    velocityCurve: 'dynamic',
+    accentStrength: 0.7,
+    ghostStrength: 0.2,
+    defaultNoteLengthRatio: 0.9,
+    attackSharpness: 'soft',
+  },
+};
+
+// Default profile for genres not explicitly defined
+const DEFAULT_ARTICULATION_PROFILE: ArticulationProfile = {
+  genre: 'pop',
+  velocityRange: [60, 110],
+  velocityCurve: 'dynamic',
+  accentStrength: 0.6,
+  ghostStrength: 0.4,
+  defaultNoteLengthRatio: 0.6,
+  attackSharpness: 'medium',
 };
 
 export function getArticulationProfile(genre: GenrePreset): ArticulationProfile {
-  return ARTICULATION_PROFILES[genre];
+  return ARTICULATION_PROFILES[genre] ?? DEFAULT_ARTICULATION_PROFILE;
 }

@@ -1,44 +1,51 @@
-import type { Note, GenerationParams, ChordDegree, LoopBundle, LoopVariation } from '../types';
+import type { Note, GenerationParams, ChordDegree, LoopBundle, LoopVariation, GenrePreset } from '../types';
 import { SeededRandom, getChordTonesForDegree, getNoteInScale, resolveChordDegree } from './theory';
-
-const CHORD_RHYTHMS = [
-  // Sustained
-  [{ step: 0, duration: '1m' }],
-  // Half notes
-  [{ step: 0, duration: '2n' }, { step: 8, duration: '2n' }],
-  // Stabs
-  [{ step: 0, duration: '8n' }, { step: 4, duration: '8n' }, { step: 8, duration: '8n' }, { step: 12, duration: '8n' }],
-  // Syncopated
-  [{ step: 0, duration: '4n' }, { step: 6, duration: '4n' }, { step: 10, duration: '4n' }],
-];
+import { getRhythmSteps, getGrooveProfile, applyGroove } from './rhythm';
 
 /**
- * Generate chord notes for a single chord variation
+ * Generate chord notes for a single chord variation using the rhythm pipeline.
+ * The pipeline provides rhythm positions; this function adds chord voicing logic.
  */
 function generateChordsVariation(
   params: GenerationParams,
   key: string,
   scale: string,
   chordDegree: ChordDegree,
-  rng: SeededRandom,
+  genre: GenrePreset,
+  seed: number,
   bars: number
 ): Note[] {
   const notes: Note[] = [];
   const octave = 4;
+  const rng = new SeededRandom(seed);
 
   // Get chord tones for this chord degree
   const chordTones = getChordTonesForDegree(chordDegree, key, scale, octave);
 
-  // Pick rhythm pattern based on density
-  const rhythmIndex = Math.min(
-    Math.floor(params.density * CHORD_RHYTHMS.length),
-    CHORD_RHYTHMS.length - 1
-  );
-  const rhythm = CHORD_RHYTHMS[rhythmIndex];
+  // Get rhythm steps from the pipeline
+  const steps = getRhythmSteps('keys', genre, params, seed);
+
+  // For chords, we thin out the steps based on density - chords shouldn't be as busy as bass
+  const chordSteps = steps.filter((step, i) => {
+    // Keep downbeats (0, 4, 8, 12) more often
+    const isDownbeat = step.position % 4 === 0;
+    if (isDownbeat) return true;
+    // Keep other steps based on density
+    return rng.chance(params.density * 0.5);
+  });
+
+  // Extend duration for chord voicings (chords sustain longer)
+  const durationMap: Record<string, string> = {
+    '16n': '8n',
+    '8n': '4n',
+    '4n': '2n',
+    '2n': '1m',
+  };
 
   for (let bar = 0; bar < bars; bar++) {
-    for (const { step, duration } of rhythm) {
-      const time = `${bar}:0:${step * 0.25}`;
+    for (const step of chordSteps) {
+      const time = `${bar}:0:${step.position * 0.25}`;
+      const duration = durationMap[step.duration] || step.duration;
 
       // Add all chord tones
       for (const pitch of chordTones) {
@@ -46,7 +53,7 @@ function generateChordsVariation(
           pitch,
           time,
           duration,
-          velocity: 0.6 + rng.next() * 0.2,
+          velocity: step.velocity * 0.9, // Slightly softer than the step velocity
         });
       }
 
@@ -58,13 +65,15 @@ function generateChordsVariation(
           pitch: seventh,
           time,
           duration,
-          velocity: 0.5,
+          velocity: step.velocity * 0.7,
         });
       }
     }
   }
 
-  return notes;
+  // Apply groove
+  const grooveProfile = getGrooveProfile(genre);
+  return applyGroove(notes, grooveProfile);
 }
 
 /**
@@ -76,15 +85,15 @@ export function generateChordsBundle(
   scale: string,
   progression: ChordDegree[],
   seed: number,
-  bars = 2
+  bars = 2,
+  genre: GenrePreset = 'pop'
 ): LoopBundle {
   const variations: LoopVariation[] = [];
 
   for (let i = 0; i < progression.length; i++) {
-    // Create a new RNG for each variation using the same seed offset pattern
-    // This ensures reproducibility
-    const rng = new SeededRandom(seed + i * 1000);
-    const notes = generateChordsVariation(params, key, scale, progression[i], rng, bars);
+    // Use offset seed for each variation to ensure reproducibility
+    const variationSeed = seed + i * 1000;
+    const notes = generateChordsVariation(params, key, scale, progression[i], genre, variationSeed, bars);
     variations.push({
       chordIndex: i,
       notes,
@@ -111,8 +120,9 @@ export function generateChords(
   key: string,
   scale: string,
   seed: number,
-  bars = 2
+  bars = 2,
+  genre: GenrePreset = 'pop'
 ): Note[] {
-  const bundle = generateChordsBundle(params, key, scale, ['I'], seed, bars);
+  const bundle = generateChordsBundle(params, key, scale, ['I'], seed, bars, genre);
   return bundle.variations[0].notes;
 }

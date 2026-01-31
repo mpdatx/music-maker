@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { SeededRandom, getNoteInScale, getChordNotes, resolveChordDegree, getChordTonesForDegree } from '../theory';
+import { SeededRandom, getNoteInScale, getChordNotes, resolveChordDegree, getChordTonesForDegree, isNoteAvailableForInstrument, SPARSE_INSTRUMENT_SAMPLES } from '../theory';
+import { SAMPLED_INSTRUMENT_RANGES } from '../index';
 import type { ChordDegree } from '../../types/music';
 
 describe('SeededRandom', () => {
@@ -66,5 +67,53 @@ describe('getChordTonesForDegree', () => {
     expect(tones).toContain('A4');
     expect(tones).toContain('C5');
     expect(tones).toContain('E5');
+  });
+});
+
+describe('isNoteAvailableForInstrument', () => {
+  it('returns true for synth instruments (no range restrictions)', () => {
+    expect(isNoteAvailableForInstrument('C4', 'pad', SAMPLED_INSTRUMENT_RANGES)).toBe(true);
+    expect(isNoteAvailableForInstrument('C1', 'bass', SAMPLED_INSTRUMENT_RANGES)).toBe(true);
+  });
+
+  it('returns true for sampled instruments within range', () => {
+    // Piano range is 33-108 (A1 to C8)
+    expect(isNoteAvailableForInstrument('C4', 'piano', SAMPLED_INSTRUMENT_RANGES)).toBe(true);
+    expect(isNoteAvailableForInstrument('A1', 'piano', SAMPLED_INSTRUMENT_RANGES)).toBe(true);
+  });
+
+  it('returns false for sampled instruments outside range', () => {
+    // Piano range is 33-108 (A1 to C8)
+    expect(isNoteAvailableForInstrument('C0', 'piano', SAMPLED_INSTRUMENT_RANGES)).toBe(false);
+    expect(isNoteAvailableForInstrument('C9', 'piano', SAMPLED_INSTRUMENT_RANGES)).toBe(false);
+  });
+
+  it('returns true for sparse instruments only on actual sample notes', () => {
+    // Flute samples: [60, 64, 69, 72, 76, 81, 84, 88, 93, 96]
+    // C4 = 60 (has sample)
+    expect(isNoteAvailableForInstrument('C4', 'flute', SAMPLED_INSTRUMENT_RANGES)).toBe(true);
+    // E4 = 64 (has sample)
+    expect(isNoteAvailableForInstrument('E4', 'flute', SAMPLED_INSTRUMENT_RANGES)).toBe(true);
+  });
+
+  it('returns false for sparse instruments on notes without samples', () => {
+    // Flute samples: [60, 64, 69, 72, 76, 81, 84, 88, 93, 96]
+    // D4 = 62 (no sample - between C4=60 and E4=64)
+    expect(isNoteAvailableForInstrument('D4', 'flute', SAMPLED_INSTRUMENT_RANGES)).toBe(false);
+    // F4 = 65 (no sample - between E4=64 and A4=69)
+    expect(isNoteAvailableForInstrument('F4', 'flute', SAMPLED_INSTRUMENT_RANGES)).toBe(false);
+  });
+
+  it('handles all sparse instruments correctly', () => {
+    for (const [instrument, samples] of Object.entries(SPARSE_INSTRUMENT_SAMPLES)) {
+      // First sample should be available
+      const firstSampleMidi = samples[0];
+      const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+      const noteName = noteNames[firstSampleMidi % 12];
+      const octave = Math.floor(firstSampleMidi / 12) - 1;
+      const note = `${noteName}${octave}`;
+
+      expect(isNoteAvailableForInstrument(note, instrument, SAMPLED_INSTRUMENT_RANGES)).toBe(true);
+    }
   });
 });
