@@ -1,22 +1,32 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+
   let {
     note,
     color = '#3a3a5e',
     flipped = true,
     index = 0,
+    active = false,
+    dragging = false,
     onpress,
-    onrelease
+    onrelease,
+    onenter,
+    ondragend
   }: {
     note: string;
     color?: string;
     flipped?: boolean;
     index?: number;
+    active?: boolean;
+    dragging?: boolean;
     onpress?: () => void;
     onrelease?: () => void;
+    onenter?: () => void;
+    ondragend?: () => void;
   } = $props();
 
-  let isPressed = $state(false);
   let isFlipped = $state(false);
+  let buttonEl: HTMLButtonElement;
 
   // Stagger animation based on index
   $effect(() => {
@@ -29,25 +39,32 @@
 
   function handlePointerDown(e: PointerEvent) {
     e.preventDefault();
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-    isPressed = true;
-    isFlipped = true;
+    // Don't capture - allow pointer to move to other buttons
     onpress?.();
   }
 
   function handlePointerUp(e: PointerEvent) {
-    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
-    isPressed = false;
-    // Keep flipped to show note name
     onrelease?.();
+    ondragend?.();
   }
 
-  function handlePointerLeave() {
-    if (isPressed) {
-      isPressed = false;
-      onrelease?.();
+  function handlePointerEnter(e: PointerEvent) {
+    // Glissando: trigger note when entering while dragging
+    if (dragging && e.buttons > 0) {
+      onenter?.();
     }
   }
+
+  // Handle global pointer up to end drag
+  onMount(() => {
+    function handleGlobalPointerUp() {
+      if (active) {
+        ondragend?.();
+      }
+    }
+    window.addEventListener('pointerup', handleGlobalPointerUp);
+    return () => window.removeEventListener('pointerup', handleGlobalPointerUp);
+  });
 
   // Format note for display (e.g., "C#4" -> "C#" and "4")
   function formatNote(n: string): { name: string; octave: string } {
@@ -60,13 +77,14 @@
 </script>
 
 <button
+  bind:this={buttonEl}
   class="note-button"
-  class:pressed={isPressed}
+  class:pressed={active}
   class:flipped={isFlipped}
   style="--button-color: {color}"
   onpointerdown={handlePointerDown}
   onpointerup={handlePointerUp}
-  onpointerleave={handlePointerLeave}
+  onpointerenter={handlePointerEnter}
   oncontextmenu={(e) => e.preventDefault()}
 >
   <div class="button-inner">

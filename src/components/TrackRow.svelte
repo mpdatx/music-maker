@@ -49,6 +49,45 @@
   // Get notes for keys mode (one octave of the current scale)
   let scaleNotes = $derived(getScaleNotes($musicalKey, $scale, 4));
 
+  // Glissando state
+  let isDragging = $state(false);
+  let activeNote = $state<string | null>(null);
+
+  function handleNoteStart(note: string) {
+    if (activeNote && activeNote !== note) {
+      onNoteRelease?.(track.id, activeNote);
+    }
+    activeNote = note;
+    isDragging = true;
+    onNotePress?.(track.id, note);
+  }
+
+  function handleNoteEnd(note: string) {
+    // Only release if this is the active note and we're not dragging to another
+    if (activeNote === note && !isDragging) {
+      activeNote = null;
+      onNoteRelease?.(track.id, note);
+    }
+  }
+
+  function handleNoteEnter(note: string) {
+    if (isDragging && activeNote !== note) {
+      if (activeNote) {
+        onNoteRelease?.(track.id, activeNote);
+      }
+      activeNote = note;
+      onNotePress?.(track.id, note);
+    }
+  }
+
+  function handleDragEnd() {
+    if (activeNote) {
+      onNoteRelease?.(track.id, activeNote);
+      activeNote = null;
+    }
+    isDragging = false;
+  }
+
   const dispatch = createEventDispatcher<{
     cellTap: { trackId: string; col: number };
     cellDoubleTap: { trackId: string; col: number };
@@ -165,8 +204,12 @@
           color={INSTRUMENT_COLORS[track.type] ?? '#3a3a5e'}
           flipped={keysFlipped}
           index={i}
-          onpress={() => onNotePress?.(track.id, note)}
-          onrelease={() => onNoteRelease?.(track.id, note)}
+          active={activeNote === note}
+          dragging={isDragging}
+          onpress={() => handleNoteStart(note)}
+          onrelease={() => handleNoteEnd(note)}
+          onenter={() => handleNoteEnter(note)}
+          ondragend={handleDragEnd}
         />
       {/each}
     {:else}
