@@ -1,3 +1,5 @@
+import type { ChordDegree } from '../types/music';
+
 export const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
 // Convert note name to MIDI number
@@ -141,6 +143,40 @@ export function getChordNotes(root: string, scale: string, degree: number, octav
     getNoteInScale(root, scale, degree + 2, octave),
     getNoteInScale(root, scale, degree + 4, octave),
   ];
+}
+
+const DEGREE_MAP: Record<string, number> = {
+  'I': 0, 'ii': 1, 'iii': 2, 'IV': 3, 'V': 4, 'vi': 5, 'vii°': 6,
+  'Imaj7': 0, 'ii7': 1, 'iii7': 2, 'IVmaj7': 3, 'V7': 4, 'vi7': 5, 'vii7b5': 6,
+};
+
+export function resolveChordDegree(degree: ChordDegree, _key: string, _scale: string): number {
+  const baseDegree = DEGREE_MAP[degree];
+  if (baseDegree === undefined) {
+    throw new Error(`Unknown chord degree: ${degree}`);
+  }
+  return baseDegree;
+}
+
+export function isSeventhChord(degree: ChordDegree): boolean {
+  return degree.includes('7');
+}
+
+export function getChordTonesForDegree(
+  degree: ChordDegree,
+  key: string,
+  scale: string,
+  octave: number
+): string[] {
+  const scaleDegree = resolveChordDegree(degree, key, scale);
+  const tones = getChordNotes(key, scale, scaleDegree, octave);
+
+  if (isSeventhChord(degree)) {
+    // Add 7th
+    tones.push(getNoteInScale(key, scale, scaleDegree + 6, octave));
+  }
+
+  return tones;
 }
 
 // Seeded random number generator for reproducible patterns
