@@ -1,15 +1,17 @@
-import type { Loop, InstrumentType, GenerationParams, GenrePreset, Note, ScaleType } from '../types';
-import { generateDrumPattern } from './drums';
-import { generateBassLine } from './bass';
-import { generateChords } from './chords';
-import { generateLead } from './lead';
-import { generatePad } from './pad';
+import type { Loop, InstrumentType, GenerationParams, GenrePreset, Note, ScaleType, LoopBundle, ChordDegree } from '../types';
+import { generateDrumPattern, generateDrumBundle } from './drums';
+import { generateBassLine, generateBassBundle } from './bass';
+import { generateChords, generateChordsBundle } from './chords';
+import { generateLead, generateLeadBundle } from './lead';
+import { generatePad, generatePadBundle } from './pad';
 import { generatePluck } from './pluck';
 import { generateStrings } from './strings';
 import { generateOrgan } from './organ';
 import { clampAndQuantizeNote } from './theory';
+import { getDefaultProgression, getProgressionById } from './progressions';
 
 export { SeededRandom } from './theory';
+export { getDefaultProgression, getProgressionById, getProgressionsForGenre } from './progressions';
 
 // MIDI note ranges for sampled instruments (based on available samples)
 const SAMPLED_INSTRUMENT_RANGES: Record<string, [number, number]> = {
@@ -222,4 +224,94 @@ export function generateLoopsForGenre(
 export function getGenreBpm(genre: GenrePreset): number {
   const [min, max] = GENRE_PRESETS[genre].bpmRange;
   return Math.floor((min + max) / 2);
+}
+
+/**
+ * Unified bundle generator that routes to the appropriate instrument bundle generator.
+ * Gets the progression for the genre (or uses provided progressionId) and returns
+ * a LoopBundle with variations for each chord in the progression.
+ */
+export function generateLoopBundle(
+  instrument: InstrumentType,
+  params: GenerationParams,
+  key: string,
+  scale: string,
+  genre: GenrePreset,
+  seed: number,
+  progressionId?: string,
+  bars = 2
+): LoopBundle {
+  // Get the progression (from progressionId or genre default)
+  const progression = progressionId
+    ? getProgressionById(progressionId) ?? getDefaultProgression(genre)
+    : getDefaultProgression(genre);
+
+  const chords = progression.chords as ChordDegree[];
+
+  let bundle: LoopBundle;
+
+  // Route to the appropriate bundle generator based on instrument type
+  switch (instrument) {
+    // Drum instruments
+    case 'drums':
+    case 'percussion':
+      bundle = generateDrumBundle(params, chords, seed, bars);
+      break;
+
+    // Bass instruments
+    case 'bass':
+    case 'bass-electric':
+    case 'contrabass':
+    case 'tuba':
+      bundle = generateBassBundle(params, key, scale, chords, seed, bars);
+      break;
+
+    // Chord/keys instruments
+    case 'keys':
+    case 'piano':
+    case 'organ-sampled':
+    case 'harmonium':
+    case 'epiano':
+      bundle = generateChordsBundle(params, key, scale, chords, seed, bars);
+      break;
+
+    // Lead/melody instruments
+    case 'lead':
+    case 'trumpet':
+    case 'saxophone':
+    case 'flute':
+    case 'clarinet':
+    case 'violin':
+      bundle = generateLeadBundle(params, key, scale, chords, seed, bars);
+      break;
+
+    // Pad/sustain instruments
+    case 'pad':
+    case 'choir':
+    case 'cello':
+    case 'french-horn':
+    case 'trombone':
+      bundle = generatePadBundle(params, key, scale, chords, seed, bars);
+      break;
+
+    // Default: treat as lead (melodic instruments)
+    case 'pluck':
+    case 'kalimba':
+    case 'xylophone':
+    case 'harp':
+    case 'guitar-acoustic':
+    case 'guitar-electric':
+    case 'bassoon':
+    case 'strings':
+    case 'organ':
+    default:
+      bundle = generateLeadBundle(params, key, scale, chords, seed, bars);
+      break;
+  }
+
+  // Set the progressionId on the returned bundle
+  bundle.progressionId = progression.id;
+  bundle.instrument = instrument;
+
+  return bundle;
 }
