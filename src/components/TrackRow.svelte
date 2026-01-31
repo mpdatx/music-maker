@@ -159,7 +159,7 @@
   }
 </script>
 
-<div class="track-row">
+<div class="track-row" class:muted={track.muted}>
   <div class="track-header">
     <span class="track-icon" style="color: {INSTRUMENT_COLORS[track.type] ?? '#888'}">
       {@html getInstrumentIcon(track.type)}
@@ -245,6 +245,15 @@
     display: flex;
     gap: 0.5rem;
     align-items: center;
+    transition: opacity 0.2s ease;
+  }
+
+  .track-row.muted {
+    opacity: 0.4;
+  }
+
+  .track-row.muted .track-header {
+    filter: grayscale(0.8);
   }
 
   .track-header {
