@@ -143,7 +143,7 @@
   }
 
   .track-header {
-    width: 120px;
+    width: 160px;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
@@ -157,8 +157,8 @@
   }
 
   .track-icon {
-    width: 28px;
-    height: 28px;
+    width: 56px;
+    height: 56px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -171,8 +171,8 @@
   }
 
   .sampled-badge {
-    width: 20px;
-    height: 20px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;

@@ -424,7 +424,7 @@
   }
 
   .header-spacer {
-    width: 120px;
+    width: 160px;
     flex-shrink: 0;
   }
 
