@@ -332,39 +332,6 @@
     editorLoopId = null;
   }
 
-  function handleAddColumn() {
-    const projectData = project.getSnapshot();
-    const params = GENRE_PRESETS[$genre].defaultParams;
-    const newCol = columnCount;
-
-    // Add a cell to each track with a generated loop
-    for (const track of $tracks) {
-      const newLoop = generateLoop(
-        track.type,
-        params,
-        projectData.key,
-        projectData.scale
-      );
-      project.addLoop(newLoop);
-      // This uses addColumn which adds empty cells, so we need a different approach
-    }
-
-    project.addColumn();
-
-    // Now assign loops to the new cells
-    const updatedTracks = project.getSnapshot().tracks;
-    for (const track of updatedTracks) {
-      const newLoop = generateLoop(
-        track.type,
-        params,
-        projectData.key,
-        projectData.scale
-      );
-      project.addLoop(newLoop);
-      project.setCellLoop(track.id, newCol, newLoop.id);
-    }
-  }
-
   // Expose stopAll for parent components
   export function stopAll() {
     loopScheduler.stopAll();
@@ -395,13 +362,6 @@
         </button>
       {/each}
     </div>
-    <button
-      class="add-column-btn"
-      onclick={handleAddColumn}
-      title="Add column"
-    >
-      +
-    </button>
   </div>
 
   {#each $tracks as track (track.id)}
@@ -483,23 +443,4 @@
     border-color: #f87171;
   }
 
-  .add-column-btn {
-    width: 32px;
-    height: 28px;
-    border: 1px dashed #555;
-    background: transparent;
-    color: #666;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1.25rem;
-    font-weight: bold;
-    transition: all 0.15s ease;
-  }
-
-  .add-column-btn:hover {
-    background: #2a2a4e;
-    color: #4ade80;
-    border-color: #4ade80;
-    border-style: solid;
-  }
 </style>
