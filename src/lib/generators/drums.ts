@@ -1,5 +1,6 @@
-import type { Note, GenerationParams, ChordDegree, LoopBundle, LoopVariation, DrumFillPoints } from '../types';
+import type { Note, GenerationParams, ChordDegree, LoopBundle, LoopVariation, DrumFillPoints, GenrePreset } from '../types';
 import { SeededRandom } from './theory';
+import { processRhythm } from './rhythm';
 
 interface DrumPattern {
   kick: number[];
@@ -160,4 +161,17 @@ export function generateDrumBundle(
     variations: [variation],
     drumFills,
   };
+}
+
+/**
+ * Generate drum pattern using the rhythm pipeline.
+ * Uses templates, transformations, dynamics, and groove for genre-authentic patterns.
+ */
+export function generateDrumPatternWithPipeline(
+  params: GenerationParams,
+  genre: GenrePreset,
+  seed: number,
+  bars = 2
+): Note[] {
+  return processRhythm('drums', genre, params, seed, bars);
 }
