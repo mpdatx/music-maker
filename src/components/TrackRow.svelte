@@ -4,7 +4,8 @@
   import GridCell from './GridCell.svelte';
   import NoteButton from './NoteButton.svelte';
   import { getInstrumentIcon, isSampledInstrument } from '../lib/icons';
-  import { getScaleNotes } from '../lib/generators/theory';
+  import { getScaleNotes, isNoteAvailableForInstrument } from '../lib/generators/theory';
+  import { SAMPLED_INSTRUMENT_RANGES } from '../lib/generators';
   import { musicalKey, scale } from '../lib/stores';
 
   let {
@@ -48,6 +49,11 @@
 
   // Get notes for keys mode (one octave of the current scale)
   let scaleNotes = $derived(getScaleNotes($musicalKey, $scale, 4));
+
+  // Check if a note is available for the current instrument
+  function isNoteAvailable(note: string): boolean {
+    return isNoteAvailableForInstrument(note, track.type, SAMPLED_INSTRUMENT_RANGES);
+  }
 
   // Glissando state
   let isDragging = $state(false);
@@ -199,6 +205,7 @@
   <div class="cells">
     {#if showKeys}
       {#each scaleNotes as note, i (note)}
+        {@const available = isNoteAvailable(note)}
         <NoteButton
           {note}
           color={INSTRUMENT_COLORS[track.type] ?? '#3a3a5e'}
@@ -206,9 +213,10 @@
           index={i}
           active={activeNote === note}
           dragging={isDragging}
-          onpress={() => handleNoteStart(note)}
-          onrelease={() => handleNoteEnd(note)}
-          onenter={() => handleNoteEnter(note)}
+          disabled={!available}
+          onpress={() => available && handleNoteStart(note)}
+          onrelease={() => available && handleNoteEnd(note)}
+          onenter={() => available && handleNoteEnter(note)}
           ondragend={handleDragEnd}
         />
       {/each}

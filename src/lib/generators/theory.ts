@@ -96,6 +96,21 @@ export function clampAndQuantizeNote(note: string, minMidi: number, maxMidi: num
   return midiToNote(midi);
 }
 
+// Check if a note is available for a given instrument
+// Returns true for synth instruments (always available) or sampled instruments within range
+export function isNoteAvailableForInstrument(
+  note: string,
+  instrumentType: string,
+  instrumentRanges: Record<string, [number, number]>
+): boolean {
+  const range = instrumentRanges[instrumentType];
+  if (!range) return true; // Synth instruments have no restrictions
+
+  const midi = noteToMidi(note);
+  const [minMidi, maxMidi] = range;
+  return midi >= minMidi && midi <= maxMidi;
+}
+
 export const SCALES: Record<string, number[]> = {
   major: [0, 2, 4, 5, 7, 9, 11],
   minor: [0, 2, 3, 5, 7, 8, 10],

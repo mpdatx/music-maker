@@ -14,7 +14,7 @@ export { SeededRandom } from './theory';
 export { getDefaultProgression, getProgressionById, getProgressionsForGenre } from './progressions';
 
 // MIDI note ranges for sampled instruments (based on available samples)
-const SAMPLED_INSTRUMENT_RANGES: Record<string, [number, number]> = {
+export const SAMPLED_INSTRUMENT_RANGES: Record<string, [number, number]> = {
   'piano': [33, 108],           // A1 to C8
   'guitar-acoustic': [38, 74],   // D2 to D5
   'guitar-electric': [40, 84],   // E2 to C6

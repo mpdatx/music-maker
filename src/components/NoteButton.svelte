@@ -8,6 +8,7 @@
     index = 0,
     active = false,
     dragging = false,
+    disabled = false,
     onpress,
     onrelease,
     onenter,
@@ -19,6 +20,7 @@
     index?: number;
     active?: boolean;
     dragging?: boolean;
+    disabled?: boolean;
     onpress?: () => void;
     onrelease?: () => void;
     onenter?: () => void;
@@ -38,17 +40,20 @@
   });
 
   function handlePointerDown(e: PointerEvent) {
+    if (disabled) return;
     e.preventDefault();
     // Don't capture - allow pointer to move to other buttons
     onpress?.();
   }
 
   function handlePointerUp(e: PointerEvent) {
+    if (disabled) return;
     onrelease?.();
     ondragend?.();
   }
 
   function handlePointerEnter(e: PointerEvent) {
+    if (disabled) return;
     // Glissando: trigger note when entering while dragging
     if (dragging && e.buttons > 0) {
       onenter?.();
@@ -81,6 +86,7 @@
   class="note-button"
   class:pressed={active}
   class:flipped={isFlipped}
+  class:disabled={disabled}
   style="--button-color: {color}"
   onpointerdown={handlePointerDown}
   onpointerup={handlePointerUp}
@@ -107,6 +113,11 @@
     cursor: pointer;
     padding: 0;
     touch-action: none;
+  }
+
+  .note-button.disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
   }
 
   .button-inner {
