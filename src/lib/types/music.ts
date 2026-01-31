@@ -100,3 +100,15 @@ export interface PadConfig {
   cols: number;
   baseOctave: number;
 }
+
+export type ChordDegree =
+  | 'I' | 'ii' | 'iii' | 'IV' | 'V' | 'vi' | 'vii°'
+  | 'Imaj7' | 'ii7' | 'iii7' | 'IVmaj7' | 'V7' | 'vi7' | 'vii7b5';
+
+export interface ChordProgression {
+  id: string;
+  name: string;
+  genre: GenrePreset;
+  chords: ChordDegree[];
+  isDefault: boolean;
+}
