@@ -395,7 +395,6 @@
       allCellStates={cellStates}
       allCellProgress={cellProgress}
       loops={$loops}
-      mode={$playMode}
       onNotePress={handleNotePress}
       onNoteRelease={handleNoteRelease}
       on:cellTap={handleCellTap}

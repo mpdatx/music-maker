@@ -1,10 +1,10 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { Track, LoopState, PlayMode } from '../lib/types';
+  import type { Track, LoopState } from '../lib/types';
   import GridCell from './GridCell.svelte';
   import NoteButton from './NoteButton.svelte';
   import { getInstrumentIcon, isSampledInstrument } from '../lib/icons';
-  import { getScaleNotes, NOTES } from '../lib/generators/theory';
+  import { getScaleNotes } from '../lib/generators/theory';
   import { musicalKey, scale } from '../lib/stores';
 
   let {
@@ -12,7 +12,6 @@
     allCellStates,
     allCellProgress,
     loops,
-    mode = 'loop',
     onNotePress,
     onNoteRelease
   }: {
@@ -20,12 +19,14 @@
     allCellStates: Record<string, LoopState>;
     allCellProgress: Record<string, number>;
     loops: Record<string, any>;
-    mode?: PlayMode;
     onNotePress?: (trackId: string, note: string) => void;
     onNoteRelease?: (trackId: string, note: string) => void;
   } = $props();
 
   let isSampled = $derived(isSampledInstrument(track.type));
+
+  // Per-row keys mode toggle
+  let keysMode = $state(false);
 
   // Get notes for keys mode (one octave of the current scale)
   let scaleNotes = $derived(getScaleNotes($musicalKey, $scale, 4));
@@ -126,12 +127,20 @@
         >
           S
         </button>
+        <button
+          class="keys-btn"
+          class:active={keysMode}
+          onclick={() => keysMode = !keysMode}
+          title="Toggle keys mode"
+        >
+          K
+        </button>
       </div>
     </div>
   </div>
 
   <div class="cells">
-    {#if mode === 'keys'}
+    {#if keysMode}
       {#each scaleNotes as note (note)}
         <NoteButton
           {note}
@@ -232,7 +241,7 @@
     gap: 0.25rem;
   }
 
-  .mute-btn, .solo-btn {
+  .mute-btn, .solo-btn, .keys-btn {
     width: 24px;
     height: 24px;
     border: 1px solid #444;
@@ -244,7 +253,7 @@
     font-weight: bold;
   }
 
-  .mute-btn:hover, .solo-btn:hover {
+  .mute-btn:hover, .solo-btn:hover, .keys-btn:hover {
     background: #3a3a5e;
   }
 
@@ -258,6 +267,12 @@
     background: #eab308;
     color: #000;
     border-color: #eab308;
+  }
+
+  .keys-btn.active {
+    background: #06b6d4;
+    color: #fff;
+    border-color: #06b6d4;
   }
 
   .cells {

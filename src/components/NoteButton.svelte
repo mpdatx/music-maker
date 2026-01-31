@@ -12,7 +12,7 @@
   } = $props();
 
   let isPressed = $state(false);
-  let isFlipped = $state(false);
+  let isFlipped = $state(true); // Start flipped to show note name
 
   function handlePointerDown(e: PointerEvent) {
     e.preventDefault();
