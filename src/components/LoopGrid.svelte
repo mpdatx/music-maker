@@ -394,14 +394,14 @@
           {isColumnActive(col) ? '⏹' : '▶'}
         </button>
       {/each}
-      <button
-        class="add-column-btn"
-        onclick={handleAddColumn}
-        title="Add column"
-      >
-        +
-      </button>
     </div>
+    <button
+      class="add-column-btn"
+      onclick={handleAddColumn}
+      title="Add column"
+    >
+      +
+    </button>
   </div>
 
   {#each $tracks as track (track.id)}
