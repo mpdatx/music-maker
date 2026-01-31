@@ -1,3 +1,0 @@
-public/samples/**/*.wav filter=lfs diff=lfs merge=lfs -text
-public/samples/**/*.mp3 filter=lfs diff=lfs merge=lfs -text
-public/samples/**/*.ogg filter=lfs diff=lfs merge=lfs -text
