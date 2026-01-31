@@ -260,20 +260,29 @@ class LoopScheduler {
 
   getLoopProgress(trackId: string): number {
     const key = this.getLoopKey(trackId);
-    const scheduled = this.scheduledLoops.get(key);
-    if (!scheduled) return 0;
-
     const transport = Tone.getTransport();
-    const loopBars = scheduled.loop.bars;
 
-    // Convert loop length to seconds
-    const loopDurationSeconds = (loopBars * 4 * 60) / transport.bpm.value;
+    // Check regular loops first
+    const scheduled = this.scheduledLoops.get(key);
+    if (scheduled) {
+      const loopBars = scheduled.loop.bars;
+      const loopDurationSeconds = (loopBars * 4 * 60) / transport.bpm.value;
+      const currentSeconds = transport.seconds;
+      const progressSeconds = currentSeconds % loopDurationSeconds;
+      return progressSeconds / loopDurationSeconds;
+    }
 
-    // Get current time in seconds and find position within loop
-    const currentSeconds = transport.seconds;
-    const progressSeconds = currentSeconds % loopDurationSeconds;
+    // Check bundles
+    const scheduledBundle = this.scheduledBundles.get(key);
+    if (scheduledBundle) {
+      const loopBars = scheduledBundle.bundle.bars;
+      const loopDurationSeconds = (loopBars * 4 * 60) / transport.bpm.value;
+      const currentSeconds = transport.seconds;
+      const progressSeconds = currentSeconds % loopDurationSeconds;
+      return progressSeconds / loopDurationSeconds;
+    }
 
-    return progressSeconds / loopDurationSeconds;
+    return 0;
   }
 
   getActiveLoopBars(trackId: string): number {
