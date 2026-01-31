@@ -85,34 +85,36 @@
 
 <div class="track-row">
   <div class="track-header">
-    <div class="track-info">
-      <span class="track-icon" style="color: {INSTRUMENT_COLORS[track.type] ?? '#888'}">
-        {@html getInstrumentIcon(track.type)}
-      </span>
-      {#if isSampled}
-        <span class="sampled-badge" title="Sampled instrument" style="color: {INSTRUMENT_COLORS[track.type] ?? '#888'}">
-          <svg viewBox="0 0 16 16" fill="currentColor">
-            <path d="M2 8a1.5 1.5 0 1 1 3 0v4a1.5 1.5 0 0 1-3 0V8zm4.5-2a1.5 1.5 0 0 1 3 0v6a1.5 1.5 0 0 1-3 0V6zm4.5-2a1.5 1.5 0 0 1 3 0v8a1.5 1.5 0 0 1-3 0V4z"/>
-          </svg>
-        </span>
-      {/if}
-      <span class="track-name" class:with-badge={isSampled}>{track.name}</span>
-    </div>
-    <div class="track-controls">
-      <button
-        class="mute-btn"
-        class:active={track.muted}
-        onclick={() => dispatch('mute', { trackId: track.id })}
-      >
-        M
-      </button>
-      <button
-        class="solo-btn"
-        class:active={track.solo}
-        onclick={() => dispatch('solo', { trackId: track.id })}
-      >
-        S
-      </button>
+    <span class="track-icon" style="color: {INSTRUMENT_COLORS[track.type] ?? '#888'}">
+      {@html getInstrumentIcon(track.type)}
+    </span>
+    <div class="track-label">
+      <div class="track-name-row">
+        {#if isSampled}
+          <span class="sampled-badge" title="Sampled instrument" style="color: {INSTRUMENT_COLORS[track.type] ?? '#888'}">
+            <svg viewBox="0 0 16 16" fill="currentColor">
+              <path d="M2 8a1.5 1.5 0 1 1 3 0v4a1.5 1.5 0 0 1-3 0V8zm4.5-2a1.5 1.5 0 0 1 3 0v6a1.5 1.5 0 0 1-3 0V6zm4.5-2a1.5 1.5 0 0 1 3 0v8a1.5 1.5 0 0 1-3 0V4z"/>
+            </svg>
+          </span>
+        {/if}
+        <span class="track-name">{track.name}</span>
+      </div>
+      <div class="track-controls">
+        <button
+          class="mute-btn"
+          class:active={track.muted}
+          onclick={() => dispatch('mute', { trackId: track.id })}
+        >
+          M
+        </button>
+        <button
+          class="solo-btn"
+          class:active={track.solo}
+          onclick={() => dispatch('solo', { trackId: track.id })}
+        >
+          S
+        </button>
+      </div>
     </div>
   </div>
 
@@ -146,14 +148,8 @@
     width: 160px;
     flex-shrink: 0;
     display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .track-info {
-    display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.5rem;
   }
 
   .track-icon {
@@ -170,9 +166,23 @@
     height: 100%;
   }
 
+  .track-label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .track-name-row {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
   .sampled-badge {
-    width: 28px;
-    height: 28px;
+    width: 18px;
+    height: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -186,16 +196,12 @@
   }
 
   .track-name {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 500;
     color: #ccc;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-
-  .track-name.with-badge {
-    font-size: 0.7rem;
   }
 
   .track-controls {
