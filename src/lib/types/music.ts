@@ -112,3 +112,25 @@ export interface ChordProgression {
   chords: ChordDegree[];
   isDefault: boolean;
 }
+
+export interface LoopVariation {
+  chordIndex: number;
+  notes: Note[];
+}
+
+export interface DrumFillPoints {
+  basePattern: Note[];
+  fillPositions: number[];      // chord indices where fills occur
+  fillPatterns: Note[][];       // fill pattern options
+}
+
+export interface LoopBundle {
+  id: string;
+  instrument: InstrumentType;
+  seed: number;
+  progressionId: string;
+  bars: number;
+  generationParams: GenerationParams;
+  variations: LoopVariation[];
+  drumFills?: DrumFillPoints;
+}

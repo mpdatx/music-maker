@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { ChordDegree, ChordProgression } from '../../types/music';
+import type { ChordDegree, ChordProgression, LoopBundle, LoopVariation, DrumFillPoints } from '../../types/music';
 import { getProgressionsForGenre, getDefaultProgression, PROGRESSIONS } from '../progressions';
 
 describe('ChordProgression types', () => {
@@ -49,5 +49,32 @@ describe('Progression Library', () => {
   it('edm-house has 4-chord progressions', () => {
     const prog = getDefaultProgression('edm-house');
     expect(prog.chords.length).toBe(4);
+  });
+});
+
+describe('LoopBundle types', () => {
+  it('accepts valid loop bundle structure', () => {
+    const bundle: LoopBundle = {
+      id: 'bundle_123',
+      instrument: 'bass',
+      seed: 12345,
+      progressionId: 'pop-classic',
+      bars: 2,
+      generationParams: { density: 0.5, complexity: 0.5, swing: 0, style: 'straight' },
+      variations: [
+        { chordIndex: 0, notes: [] },
+        { chordIndex: 1, notes: [] },
+      ],
+    };
+    expect(bundle.variations.length).toBe(2);
+  });
+
+  it('accepts drum fill points', () => {
+    const fills: DrumFillPoints = {
+      basePattern: [],
+      fillPositions: [3, 7],
+      fillPatterns: [[], []],
+    };
+    expect(fills.fillPositions.length).toBe(2);
   });
 });
