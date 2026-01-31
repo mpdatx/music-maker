@@ -4,6 +4,7 @@
   import { transport, instrumentManager, setMasterVolume } from '../lib/audio';
   import type { GenrePreset, ScaleType } from '../lib/types';
   import { GENRE_PRESETS, getGenreBpm, generateLoop } from '../lib/generators';
+  import ProgressionDisplay from './ProgressionDisplay.svelte';
 
   const dispatch = createEventDispatcher<{
     regenerateAll: void;
@@ -167,6 +168,8 @@
         {/each}
       </select>
     </label>
+
+    <ProgressionDisplay />
 
     <label>
         BPM:

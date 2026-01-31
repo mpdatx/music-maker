@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { progressionStore, currentProgression, currentChordIndex, progressionsForCurrentGenre } from '$lib/stores/progression';
-  import type { ChordProgression } from '$lib/types/music';
+  import { progressionStore, currentProgression, currentChordIndex, progressionsForCurrentGenre } from '../lib/stores/progression';
+  import type { ChordProgression } from '../lib/types/music';
 
   let showSelector = false;
 
