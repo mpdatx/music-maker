@@ -1,66 +1,17 @@
 import { writable, derived, get } from 'svelte/store';
-import type { Project, Track, Loop, InstrumentType, GenrePreset } from '../types';
-import { generateLoop, GENRE_PRESETS } from '../generators';
+import type { Project, Track, Loop, InstrumentType } from '../types';
+import { generateLoop, GENRE_PRESETS, getGenreTracks } from '../generators';
+import type { GenrePreset } from '../genres';
 
 function generateId(): string {
   return Math.random().toString(36).substring(2, 15);
 }
 
-// Genre-specific track configurations with sampled instruments where appropriate
-export const GENRE_TRACKS: Record<GenrePreset, Array<{ type: InstrumentType; name: string }>> = {
-  'lofi-hiphop': [
-    { type: 'drums', name: 'Drums' },
-    { type: 'piano', name: 'Piano' },
-    { type: 'bass-electric', name: 'Bass' },
-    { type: 'guitar-acoustic', name: 'Guitar' },
-    { type: 'pad', name: 'Pad' },
-    { type: 'pluck', name: 'Pluck' },
-    { type: 'violin', name: 'Violin' },
-  ],
-  'edm-house': [
-    { type: 'drums', name: 'Drums' },
-    { type: 'percussion', name: 'Percussion' },
-    { type: 'bass', name: 'Bass' },
-    { type: 'keys', name: 'Keys' },
-    { type: 'lead', name: 'Lead' },
-    { type: 'pad', name: 'Pad' },
-    { type: 'pluck', name: 'Pluck' },
-  ],
-  'rock': [
-    { type: 'drums', name: 'Drums' },
-    { type: 'bass-electric', name: 'Bass' },
-    { type: 'guitar-electric', name: 'Lead Guitar' },
-    { type: 'guitar-acoustic', name: 'Rhythm Guitar' },
-    { type: 'piano', name: 'Piano' },
-    { type: 'organ-sampled', name: 'Organ' },
-  ],
-  'ambient': [
-    { type: 'drums', name: 'Drums' },
-    { type: 'piano', name: 'Piano' },
-    { type: 'pad', name: 'Pad' },
-    { type: 'violin', name: 'Violin' },
-    { type: 'cello', name: 'Cello' },
-    { type: 'harp', name: 'Harp' },
-    { type: 'flute', name: 'Flute' },
-  ],
-  'funk': [
-    { type: 'drums', name: 'Drums' },
-    { type: 'percussion', name: 'Percussion' },
-    { type: 'bass-electric', name: 'Bass' },
-    { type: 'guitar-electric', name: 'Guitar' },
-    { type: 'organ-sampled', name: 'Organ' },
-    { type: 'trumpet', name: 'Trumpet' },
-    { type: 'saxophone', name: 'Sax' },
-  ],
-  'pop': [
-    { type: 'drums', name: 'Drums' },
-    { type: 'bass-electric', name: 'Bass' },
-    { type: 'piano', name: 'Piano' },
-    { type: 'guitar-acoustic', name: 'Guitar' },
-    { type: 'strings', name: 'Strings' },
-    { type: 'pad', name: 'Pad' },
-  ],
-};
+// Re-export for backwards compatibility - tracks are now in src/lib/genres.ts
+import { GENRES } from '../genres';
+export const GENRE_TRACKS = Object.fromEntries(
+  Object.entries(GENRES).map(([key, val]) => [key, val.tracks])
+) as Record<GenrePreset, Array<{ type: InstrumentType; name: string }>>;
 
 function createDefaultProject(): Project {
   const colCount = 8;

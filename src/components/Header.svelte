@@ -2,8 +2,9 @@
   import { createEventDispatcher } from 'svelte';
   import { project, bpm, musicalKey, scale, tracks, genre, playMode, playback } from '../lib/stores';
   import { transport, instrumentManager, setMasterVolume } from '../lib/audio';
-  import type { GenrePreset, ScaleType } from '../lib/types';
-  import { GENRE_PRESETS, getGenreBpm, generateLoop } from '../lib/generators';
+  import type { ScaleType } from '../lib/types';
+  import { GENRES, GENRE_PRESETS, getGenreBpm, generateLoop, getAllGenres } from '../lib/generators';
+  import type { GenrePreset } from '../lib/genres';
   import ProgressionDisplay from './ProgressionDisplay.svelte';
 
   const dispatch = createEventDispatcher<{
@@ -26,7 +27,8 @@
     dispatch('stopAll');
   }
 
-  const genres: GenrePreset[] = ['lofi-hiphop', 'edm-house', 'rock', 'ambient', 'funk', 'pop'];
+  // Get all available genres dynamically
+  const genres: GenrePreset[] = getAllGenres();
   const scales: ScaleType[] = ['major', 'minor', 'dorian', 'mixolydian', 'pentatonic', 'chromatic'];
   const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 

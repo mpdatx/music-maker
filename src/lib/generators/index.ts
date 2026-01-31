@@ -1,4 +1,4 @@
-import type { Loop, InstrumentType, GenerationParams, GenrePreset, Note, ScaleType, LoopBundle, ChordDegree } from '../types';
+import type { Loop, InstrumentType, GenerationParams, Note, ScaleType, LoopBundle, ChordDegree } from '../types';
 import { generateDrumPattern, generateDrumBundle } from './drums';
 import { generateBassLine, generateBassBundle } from './bass';
 import { generateChords, generateChordsBundle } from './chords';
@@ -9,9 +9,14 @@ import { generateStrings } from './strings';
 import { generateOrgan } from './organ';
 import { clampAndQuantizeNote } from './theory';
 import { getDefaultProgression, getProgressionById } from './progressions';
+import { GENRES, getGenreConfig, getGenreBpm as getGenreBpmFromConfig } from '../genres';
+import type { GenrePreset } from '../genres';
 
 export { SeededRandom } from './theory';
 export { getDefaultProgression, getProgressionById, getProgressionsForGenre } from './progressions';
+// Re-export from genres for backwards compatibility
+export { GENRES, getGenreConfig, getGenreTracks, getAllGenres } from '../genres';
+export type { GenrePreset } from '../genres';
 
 // MIDI note ranges for sampled instruments (based on available samples)
 export const SAMPLED_INSTRUMENT_RANGES: Record<string, [number, number]> = {
@@ -48,65 +53,8 @@ function constrainNotesToRange(notes: Note[], instrumentType: InstrumentType): N
   }));
 }
 
-interface GenreConfig {
-  name: string;
-  bpmRange: [number, number];
-  key: string;
-  scale: ScaleType;
-  swing: number;
-  defaultParams: GenerationParams;
-}
-
-export const GENRE_PRESETS: Record<GenrePreset, GenreConfig> = {
-  'lofi-hiphop': {
-    name: 'Lo-fi Hip-hop',
-    bpmRange: [70, 90],
-    key: 'D',
-    scale: 'minor',
-    swing: 0.3,
-    defaultParams: { density: 0.4, complexity: 0.3, swing: 0.3, style: 'swung' },
-  },
-  'edm-house': {
-    name: 'EDM/House',
-    bpmRange: [120, 130],
-    key: 'A',
-    scale: 'minor',
-    swing: 0,
-    defaultParams: { density: 0.7, complexity: 0.5, swing: 0, style: 'straight' },
-  },
-  'rock': {
-    name: 'Rock',
-    bpmRange: [100, 140],
-    key: 'E',
-    scale: 'minor',
-    swing: 0,
-    defaultParams: { density: 0.5, complexity: 0.4, swing: 0, style: 'straight' },
-  },
-  'ambient': {
-    name: 'Ambient/Chill',
-    bpmRange: [60, 80],
-    key: 'C',
-    scale: 'major',
-    swing: 0.1,
-    defaultParams: { density: 0.2, complexity: 0.2, swing: 0.1, style: 'straight' },
-  },
-  'funk': {
-    name: 'Funk',
-    bpmRange: [95, 115],
-    key: 'E',
-    scale: 'mixolydian',
-    swing: 0.4,
-    defaultParams: { density: 0.6, complexity: 0.6, swing: 0.4, style: 'syncopated' },
-  },
-  'pop': {
-    name: 'Pop',
-    bpmRange: [100, 120],
-    key: 'C',
-    scale: 'major',
-    swing: 0,
-    defaultParams: { density: 0.5, complexity: 0.3, swing: 0, style: 'straight' },
-  },
-};
+// Re-export GENRES as GENRE_PRESETS for backwards compatibility
+export const GENRE_PRESETS = GENRES;
 
 function generateId(): string {
   return 'loop_' + Math.random().toString(36).substring(2, 15);
@@ -222,8 +170,7 @@ export function generateLoopsForGenre(
 }
 
 export function getGenreBpm(genre: GenrePreset): number {
-  const [min, max] = GENRE_PRESETS[genre].bpmRange;
-  return Math.floor((min + max) / 2);
+  return getGenreBpmFromConfig(genre);
 }
 
 /**
