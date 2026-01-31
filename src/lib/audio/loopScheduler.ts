@@ -68,8 +68,15 @@ class LoopScheduler {
         }
       }
     } else if (instrument.synth instanceof Tone.Sampler) {
-      // Handle sampled instruments
-      instrument.synth.triggerAttackRelease(event.pitch, event.duration, time, event.velocity);
+      // Handle sampled instruments - wrap in try-catch for sparse sample coverage
+      try {
+        if (instrument.synth.loaded) {
+          instrument.synth.triggerAttackRelease(event.pitch, event.duration, time, event.velocity);
+        }
+      } catch (e) {
+        // Sampler couldn't play this note - likely out of sample range
+        console.debug(`Sampler couldn't play note ${event.pitch}:`, e);
+      }
     } else {
       const synth = instrument.synth as MelodicSynth;
       synth.triggerAttackRelease(event.pitch, event.duration, time, event.velocity);

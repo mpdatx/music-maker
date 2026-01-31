@@ -34,10 +34,9 @@
 
     const config = GENRE_PRESETS[newGenre];
     const newBpm = getGenreBpm(newGenre);
-    const projectData = project.getSnapshot();
 
-    // Rebuild tracks with genre-appropriate instruments
-    project.rebuildTracksForGenre(newGenre, projectData.key, projectData.scale);
+    // Rebuild tracks with genre-appropriate instruments, key, and scale
+    project.rebuildTracksForGenre(newGenre);
 
     project.setBpm(newBpm);
     transport.setBpm(newBpm);

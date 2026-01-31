@@ -1,4 +1,4 @@
-import type { Loop, InstrumentType, GenerationParams, GenrePreset, Note } from '../types';
+import type { Loop, InstrumentType, GenerationParams, GenrePreset, Note, ScaleType } from '../types';
 import { generateDrumPattern } from './drums';
 import { generateBassLine } from './bass';
 import { generateChords } from './chords';
@@ -7,7 +7,7 @@ import { generatePad } from './pad';
 import { generatePluck } from './pluck';
 import { generateStrings } from './strings';
 import { generateOrgan } from './organ';
-import { clampNoteToRange } from './theory';
+import { clampAndQuantizeNote } from './theory';
 
 export { SeededRandom } from './theory';
 
@@ -34,7 +34,7 @@ const SAMPLED_INSTRUMENT_RANGES: Record<string, [number, number]> = {
   'xylophone': [67, 108],        // G4 to C8
 };
 
-// Constrain notes to instrument range
+// Constrain notes to instrument range and quantize to available samples
 function constrainNotesToRange(notes: Note[], instrumentType: InstrumentType): Note[] {
   const range = SAMPLED_INSTRUMENT_RANGES[instrumentType];
   if (!range) return notes; // Synth instruments don't need constraining
@@ -42,13 +42,15 @@ function constrainNotesToRange(notes: Note[], instrumentType: InstrumentType): N
   const [minMidi, maxMidi] = range;
   return notes.map(note => ({
     ...note,
-    pitch: clampNoteToRange(note.pitch, minMidi, maxMidi),
+    pitch: clampAndQuantizeNote(note.pitch, minMidi, maxMidi, instrumentType),
   }));
 }
 
 interface GenreConfig {
   name: string;
   bpmRange: [number, number];
+  key: string;
+  scale: ScaleType;
   swing: number;
   defaultParams: GenerationParams;
 }
@@ -57,36 +59,48 @@ export const GENRE_PRESETS: Record<GenrePreset, GenreConfig> = {
   'lofi-hiphop': {
     name: 'Lo-fi Hip-hop',
     bpmRange: [70, 90],
+    key: 'D',
+    scale: 'minor',
     swing: 0.3,
     defaultParams: { density: 0.4, complexity: 0.3, swing: 0.3, style: 'swung' },
   },
   'edm-house': {
     name: 'EDM/House',
     bpmRange: [120, 130],
+    key: 'A',
+    scale: 'minor',
     swing: 0,
     defaultParams: { density: 0.7, complexity: 0.5, swing: 0, style: 'straight' },
   },
   'rock': {
     name: 'Rock',
     bpmRange: [100, 140],
+    key: 'E',
+    scale: 'minor',
     swing: 0,
     defaultParams: { density: 0.5, complexity: 0.4, swing: 0, style: 'straight' },
   },
   'ambient': {
     name: 'Ambient/Chill',
     bpmRange: [60, 80],
+    key: 'C',
+    scale: 'major',
     swing: 0.1,
     defaultParams: { density: 0.2, complexity: 0.2, swing: 0.1, style: 'straight' },
   },
   'funk': {
     name: 'Funk',
     bpmRange: [95, 115],
+    key: 'E',
+    scale: 'mixolydian',
     swing: 0.4,
     defaultParams: { density: 0.6, complexity: 0.6, swing: 0.4, style: 'syncopated' },
   },
   'pop': {
     name: 'Pop',
     bpmRange: [100, 120],
+    key: 'C',
+    scale: 'major',
     swing: 0,
     defaultParams: { density: 0.5, complexity: 0.3, swing: 0, style: 'straight' },
   },

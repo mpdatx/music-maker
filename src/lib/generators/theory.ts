@@ -37,6 +37,63 @@ export function clampNoteToRange(note: string, minMidi: number, maxMidi: number)
   return midiToNote(midi);
 }
 
+// Sample MIDI notes for sparse instruments (to quantize generated notes)
+// Only include instruments with gaps > 3 semitones between samples
+export const SPARSE_INSTRUMENT_SAMPLES: Record<string, number[]> = {
+  'xylophone': [67, 72, 79, 84, 91, 96, 103, 108], // G4, C5, G5, C6, G6, C7, G7, C8
+  'flute': [60, 64, 69, 72, 76, 81, 84, 88, 93, 96], // C4, E4, A4, C5, E5, A5, C6, E6, A6, C7
+  'clarinet': [50, 53, 58, 62, 65, 70, 74, 77, 82, 86, 90], // D3, F3, A#3, D4, F4, A#4, D5, F5, A#5, D6, F#6
+  'violin': [55, 57, 60, 64, 67, 69, 72, 76, 79, 81, 84, 88, 91, 93, 96], // G3, A3, C4, E4, G4, A4, C5, E5, G5, A5, C6, E6, G6, A6, C7
+  'trumpet': [53, 57, 60, 63, 65, 67, 70, 74, 77, 81, 84], // F3, A3, C4, D#4, F4, G4, A#4, D5, F5, A5, C6
+  'french-horn': [33, 36, 39, 43, 50, 53, 57, 60, 74, 77], // A1, C2, D#2, G2, D3, F3, A3, C4, D5, F5
+  'tuba': [29, 34, 39, 41, 46, 50, 53, 58, 62], // F1, A#1, D#2, F2, A#2, D3, F3, A#3, D4
+  'harp': [28, 31, 35, 38, 41, 45, 48, 52, 55, 59, 62, 65, 69, 72, 76, 79, 83, 86, 89, 93, 95, 98, 101], // various
+  'contrabass': [30, 31, 34, 36, 38, 40, 42, 44, 45, 49, 52, 56, 59], // F#1, G1, A#1, C2, D2, E2, F#2, G#2, A2, C#3, E3, G#3, B3
+};
+
+// Quantize a MIDI note to the nearest available sample note
+export function quantizeToNearestSample(midi: number, sampleNotes: number[]): number {
+  if (sampleNotes.length === 0) return midi;
+
+  let closest = sampleNotes[0];
+  let minDist = Math.abs(midi - closest);
+
+  for (const sampleNote of sampleNotes) {
+    const dist = Math.abs(midi - sampleNote);
+    if (dist < minDist) {
+      minDist = dist;
+      closest = sampleNote;
+    }
+  }
+
+  return closest;
+}
+
+// Clamp note to range and quantize to nearest sample for sparse instruments
+export function clampAndQuantizeNote(note: string, minMidi: number, maxMidi: number, instrumentType: string): string {
+  let midi = noteToMidi(note);
+
+  // Transpose by octaves until within range
+  while (midi < minMidi) {
+    midi += 12;
+  }
+  while (midi > maxMidi) {
+    midi -= 12;
+  }
+
+  // Clamp if still out of range
+  if (midi < minMidi) midi = minMidi;
+  if (midi > maxMidi) midi = maxMidi;
+
+  // For sparse instruments, quantize to nearest sample
+  const sampleNotes = SPARSE_INSTRUMENT_SAMPLES[instrumentType];
+  if (sampleNotes) {
+    midi = quantizeToNearestSample(midi, sampleNotes);
+  }
+
+  return midiToNote(midi);
+}
+
 export const SCALES: Record<string, number[]> = {
   major: [0, 2, 4, 5, 7, 9, 11],
   minor: [0, 2, 3, 5, 7, 8, 10],

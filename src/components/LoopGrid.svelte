@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import { project, tracks, loops, playback, isPlaying, genre } from '../lib/stores';
-  import { initAudio, transport, instrumentManager, loopScheduler } from '../lib/audio';
+  import { initAudio, transport, instrumentManager, loopScheduler, preloadInstruments, isSampledInstrument } from '../lib/audio';
+  import { GENRE_TRACKS } from '../lib/stores/project';
   import { generateLoop, GENRE_PRESETS } from '../lib/generators';
   import type { Track, LoopState, GenrePreset, InstrumentType } from '../lib/types';
   import TrackRow from './TrackRow.svelte';
@@ -51,13 +52,16 @@
     cellStates = {};
     cellProgress = {};
 
+    // Preload samples for current genre (start early)
+    const preloadPromise = preloadGenreInstruments($genre);
+
     // Dispose old instruments and create new ones
     for (const track of $tracks) {
       instrumentManager.disposeTrackInstrument(track.id);
     }
 
-    // Small delay to allow dispose to complete
-    await new Promise(resolve => setTimeout(resolve, 50));
+    // Wait for preload to finish before creating instruments
+    await preloadPromise;
 
     for (const track of $tracks) {
       instrumentManager.createTrackInstrument(track.id, track.type);
@@ -70,10 +74,25 @@
     return `${trackId}:${col}`;
   }
 
+  // Preload sampled instruments for a genre
+  async function preloadGenreInstruments(genrePreset: typeof $genre) {
+    const trackDefs = GENRE_TRACKS[genrePreset];
+    const sampledTypes = trackDefs
+      .map(t => t.type)
+      .filter(type => isSampledInstrument(type)) as Parameters<typeof preloadInstruments>[0];
+
+    if (sampledTypes.length > 0) {
+      await preloadInstruments(sampledTypes);
+    }
+  }
+
   async function ensureAudio() {
     if (!audioInitialized) {
       await initAudio();
       audioInitialized = true;
+
+      // Preload samples for current genre (non-blocking)
+      preloadGenreInstruments($genre);
 
       // Initialize instruments for all tracks
       for (const track of $tracks) {

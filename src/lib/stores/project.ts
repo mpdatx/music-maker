@@ -64,11 +64,12 @@ export const GENRE_TRACKS: Record<GenrePreset, Array<{ type: InstrumentType; nam
 
 function createDefaultProject(): Project {
   const colCount = 8;
-  const key = 'C';
-  const scale: Project['scale'] = 'minor';
   const genre: GenrePreset = 'lofi-hiphop';
+  const genreConfig = GENRE_PRESETS[genre];
+  const key = genreConfig.key;
+  const scale = genreConfig.scale;
   const loops: Record<string, Loop> = {};
-  const params = GENRE_PRESETS[genre].defaultParams;
+  const params = genreConfig.defaultParams;
 
   const trackDefs = GENRE_TRACKS[genre];
 
@@ -128,9 +129,10 @@ function createProjectStore() {
 
     setGenre: (genre: GenrePreset) => update(p => ({ ...p, genre, updatedAt: Date.now() })),
 
-    // Rebuild tracks for a new genre with appropriate instruments
-    rebuildTracksForGenre: (genre: GenrePreset, key: string, scale: Project['scale']) => update(p => {
-      const params = GENRE_PRESETS[genre].defaultParams;
+    // Rebuild tracks for a new genre with appropriate instruments, key, and scale
+    rebuildTracksForGenre: (genre: GenrePreset) => update(p => {
+      const genreConfig = GENRE_PRESETS[genre];
+      const { key, scale, defaultParams: params } = genreConfig;
       const trackDefs = GENRE_TRACKS[genre];
       const colCount = p.tracks[0]?.cells.length ?? 8;
       const loops: Record<string, Loop> = {};
@@ -156,7 +158,7 @@ function createProjectStore() {
         };
       });
 
-      return { ...p, genre, tracks, loops, updatedAt: Date.now() };
+      return { ...p, genre, key, scale, tracks, loops, updatedAt: Date.now() };
     }),
 
     setTrackVolume: (trackId: string, volume: number) => update(p => ({
