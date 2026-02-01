@@ -112,7 +112,9 @@ class PadPlayer {
     this.activeNotes.add(note);
 
     if (this.synth instanceof Tone.Sampler) {
-      this.synth.triggerAttack(note, Tone.now(), velocity);
+      if (!this.synth.disposed) {
+        this.synth.triggerAttack(note, Tone.now(), velocity);
+      }
     } else if ('triggerAttack' in this.synth) {
       this.synth.triggerAttack(note, Tone.now(), velocity);
     }
@@ -124,7 +126,9 @@ class PadPlayer {
     this.activeNotes.delete(note);
 
     if (this.synth instanceof Tone.Sampler) {
-      this.synth.triggerRelease(note, Tone.now());
+      if (!this.synth.disposed) {
+        this.synth.triggerRelease(note, Tone.now());
+      }
     } else if (this.synth instanceof Tone.PolySynth) {
       this.synth.triggerRelease(note, Tone.now());
     } else {
@@ -136,7 +140,9 @@ class PadPlayer {
     if (!this.synth) return;
 
     if (this.synth instanceof Tone.Sampler) {
-      this.synth.releaseAll(Tone.now());
+      if (!this.synth.disposed) {
+        this.synth.releaseAll(Tone.now());
+      }
     } else if (this.synth instanceof Tone.PolySynth) {
       for (const note of this.activeNotes) {
         this.synth.triggerRelease(note, Tone.now());
