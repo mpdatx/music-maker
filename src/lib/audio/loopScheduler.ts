@@ -151,14 +151,6 @@ class LoopScheduler {
     const totalBars = clock.totalBars;
     const parts: Tone.Part[] = [];
 
-    // Debug: Log bundle scheduling info
-    console.log(`[ChordAware] Scheduling ${bundle.instrument} bundle:`, {
-      variations: bundle.variations.length,
-      barsPerChord,
-      totalBars,
-      chords: bundle.variations.map(v => `chord${v.chordIndex}`),
-    });
-
     // Create a part for each variation, offset to start at the correct bar
     for (const variation of bundle.variations) {
       const startBar = variation.chordIndex * barsPerChord;
@@ -168,11 +160,6 @@ class LoopScheduler {
         duration: note.duration,
         velocity: note.velocity,
       }));
-
-      // Debug: Log first note of each variation to verify different pitches
-      if (events.length > 0) {
-        console.log(`[ChordAware] ${bundle.instrument} chord${variation.chordIndex}: first note = ${events[0].pitch}, starts at bar ${startBar}`);
-      }
 
       const part = new Tone.Part((time, event) => {
         this.triggerNote(instrument, event, time);
