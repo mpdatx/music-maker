@@ -1,5 +1,5 @@
 import type { Note, GenerationParams, ChordDegree, LoopBundle, LoopVariation, GenrePreset } from '../types';
-import { SeededRandom, getNoteInScale, getChordTonesForDegree, resolveChordDegree } from './theory';
+import { SeededRandom, getNoteInScale, getChordTonesForDegree, resolveChordDegree, positionToTime } from './theory';
 import { getRhythmSteps, getGrooveProfile, applyGroove } from './rhythm';
 
 type Contour = 'ascending' | 'descending' | 'arch' | 'flat';
@@ -49,7 +49,7 @@ function generateLeadVariation(
     // Apply contour to the rhythm steps
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
-      const time = `${bar}:0:${step.position * 0.25}`;
+      const time = positionToTime(bar, step.position);
       const isStrongBeat = step.position % 4 === 0;
 
       // Calculate contour-based degree offset

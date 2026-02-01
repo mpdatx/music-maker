@@ -14,8 +14,8 @@ describe('generatePadBundle', () => {
   it('pad notes are sustained', () => {
     const bundle = generatePadBundle(params, 'C', 'major', progression, 12345, 2);
     const notes = bundle.variations[0].notes;
-    // Pads should have long durations
-    expect(notes.some(n => n.duration === '1m' || n.duration === '2n')).toBe(true);
+    // Pads should have long durations (2m for 2-bar variations, 1m for shorter)
+    expect(notes.some(n => n.duration === '2m' || n.duration === '1m' || n.duration === '2n')).toBe(true);
   });
 
   it('is reproducible with same seed', () => {

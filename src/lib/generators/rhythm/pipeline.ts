@@ -1,7 +1,7 @@
 // src/lib/generators/rhythm/pipeline.ts
 import type { GenrePreset, GenerationParams, Note, InstrumentType } from '../../types/music';
 import type { TemplateStep, EnergyLevel } from './types';
-import { SeededRandom } from '../theory';
+import { SeededRandom, positionToTime } from '../theory';
 import { getDrumTemplates } from './templates/drums';
 import { getBassTemplates } from './templates/bass';
 import { getGrooveProfile } from './grooveProfiles';
@@ -25,7 +25,7 @@ function stepsToNotes(
   const sorted = [...steps].sort((a, b) => a.position - b.position);
 
   for (const step of sorted) {
-    const time = `${bar}:0:${step.position * 0.25}`;
+    const time = positionToTime(bar, step.position);
     let pitch: string;
 
     if (step.accent && step.velocity > 0.8) {
@@ -114,7 +114,7 @@ export function processRhythm(
       for (const step of steps) {
         allNotes.push({
           pitch: 'C3',
-          time: `${bar}:0:${step.position * 0.25}`,
+          time: positionToTime(bar, step.position),
           duration: step.duration,
           velocity: step.velocity,
         });

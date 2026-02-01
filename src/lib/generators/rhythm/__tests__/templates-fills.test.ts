@@ -30,8 +30,8 @@ describe('fill templates', () => {
     const templates = getFillTemplates('rock');
     for (const template of templates) {
       for (const note of template.notes) {
-        // Notes should be in the last beat (positions 12-15)
-        expect(note.time).toMatch(/^0:0:3/);
+        // Notes should be in the last beat (beat 3, positions 12-15)
+        expect(note.time).toMatch(/^0:3:[0-3]$/);
       }
     }
   });

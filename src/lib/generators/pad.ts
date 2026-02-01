@@ -40,8 +40,8 @@ function generatePadVariation(
   // Get chord tones for this degree
   const chordNotes = getChordTonesForDegree(chordDegree, key, scale, octave);
 
-  // Pads are sustained - use long durations
-  const duration = bars >= 2 ? '1m' : '2n';
+  // Pads are sustained - use long durations that cover the full variation
+  const duration = bars >= 2 ? '2m' : '1m';
 
   // Add each note of the chord
   for (let i = 0; i < chordNotes.length; i++) {

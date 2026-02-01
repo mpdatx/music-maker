@@ -25,6 +25,7 @@
 
   function handleStopAll() {
     transport.stop();
+    transport.position = 0; // Reset position so Parts starting at 0 will play immediately
     playback.reset();
     dispatch('stopAll');
   }

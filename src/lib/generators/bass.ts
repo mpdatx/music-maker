@@ -1,5 +1,5 @@
 import type { Note, GenerationParams, ChordDegree, LoopBundle, LoopVariation, GenrePreset } from '../types';
-import { SeededRandom, getNoteInScale, resolveChordDegree } from './theory';
+import { SeededRandom, getNoteInScale, resolveChordDegree, positionToTime } from './theory';
 import { getRhythmSteps, getGrooveProfile, applyGroove } from './rhythm';
 
 /**
@@ -27,7 +27,7 @@ function generateBassVariation(
 
   for (let bar = 0; bar < bars; bar++) {
     for (const step of steps) {
-      const time = `${bar}:0:${step.position * 0.25}`;
+      const time = positionToTime(bar, step.position);
 
       // Root note most of the time
       let degree = rootDegree;

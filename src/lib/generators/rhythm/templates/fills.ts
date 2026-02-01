@@ -2,7 +2,7 @@
 import type { GenrePreset } from '../../../types/music';
 import type { Note } from '../../../types/music';
 import type { EnergyLevel } from '../types';
-import { SeededRandom } from '../../theory';
+import { SeededRandom, positionToTime } from '../../theory';
 
 export interface FillTemplate {
   id: string;
@@ -14,12 +14,13 @@ export interface FillTemplate {
 }
 
 // Helper to create fill notes at specific positions in the last beat
+// step 0-3 maps to positions 12-15 (beat 3 of the bar)
 function fillNotes(
   pattern: Array<{ step: number; pitch: string; velocity: number }>
 ): Note[] {
   return pattern.map(({ step, pitch, velocity }) => ({
     pitch,
-    time: `0:0:${(12 + step) * 0.25}`,
+    time: positionToTime(0, 12 + step),
     duration: '16n',
     velocity,
   }));

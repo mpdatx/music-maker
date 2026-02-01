@@ -167,8 +167,20 @@ export function getChordNotes(root: string, scale: string, degree: number, octav
 }
 
 const DEGREE_MAP: Record<string, number> = {
+  // Major scale triads
   'I': 0, 'ii': 1, 'iii': 2, 'IV': 3, 'V': 4, 'vi': 5, 'vii°': 6,
-  'Imaj7': 0, 'ii7': 1, 'iii7': 2, 'IVmaj7': 3, 'V7': 4, 'vi7': 5, 'vii7b5': 6,
+  // Minor scale triads
+  'i': 0, 'iv': 3, 'v': 4,
+  // Borrowed/modal chords (major quality on typically minor degrees)
+  'III': 2, 'VI': 5, 'VII': 6,
+  // Major 7th chords
+  'Imaj7': 0, 'IVmaj7': 3,
+  // Minor 7th chords
+  'ii7': 1, 'iii7': 2, 'vi7': 5, 'i7': 0, 'iv7': 3,
+  // Dominant 7th chords
+  'V7': 4, 'I7': 0, 'IV7': 3,
+  // Diminished
+  'vii7b5': 6,
 };
 
 export function resolveChordDegree(degree: ChordDegree, _key: string, _scale: string): number {
@@ -198,6 +210,13 @@ export function getChordTonesForDegree(
   }
 
   return tones;
+}
+
+// Convert a 16th-note position (0-15) within a bar to Tone.js time format
+export function positionToTime(bar: number, position: number): string {
+  const beat = Math.floor(position / 4);
+  const sixteenth = position % 4;
+  return `${bar}:${beat}:${sixteenth}`;
 }
 
 // Seeded random number generator for reproducible patterns

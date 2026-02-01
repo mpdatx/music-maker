@@ -1,5 +1,5 @@
 import type { Note, GenerationParams, ChordDegree, LoopBundle, LoopVariation, DrumFillPoints, GenrePreset } from '../types';
-import { SeededRandom } from './theory';
+import { SeededRandom, positionToTime } from './theory';
 import { processRhythm, generateFill } from './rhythm';
 
 interface DrumPattern {
@@ -31,13 +31,13 @@ export function generateDrumPattern(params: GenerationParams, seed: number, bars
   for (let bar = 0; bar < bars; bar++) {
     // Kick
     for (const step of pattern.kick) {
-      const time = `${bar}:0:${step * 0.25}`;
+      const time = positionToTime(bar, step);
       notes.push({ pitch: 'kick', time, duration: '8n', velocity: 0.9 });
     }
 
     // Snare
     for (const step of pattern.snare) {
-      const time = `${bar}:0:${step * 0.25}`;
+      const time = positionToTime(bar, step);
       notes.push({ pitch: 'snare', time, duration: '8n', velocity: 0.85 });
     }
 
@@ -50,7 +50,7 @@ export function generateDrumPattern(params: GenerationParams, seed: number, bars
       const shouldHit = baseHit || rng.chance(params.density * 0.3);
 
       if (shouldHit) {
-        const time = `${bar}:0:${step * 0.25}`;
+        const time = positionToTime(bar, step);
         const isOpen = openHit || (rng.chance(0.1) && params.complexity > 0.5);
         notes.push({
           pitch: isOpen ? 'openhat' : 'hihat',
@@ -66,7 +66,7 @@ export function generateDrumPattern(params: GenerationParams, seed: number, bars
       const ghostCount = Math.floor(params.complexity * 4);
       for (let i = 0; i < ghostCount; i++) {
         const step = rng.nextInt(0, stepsPerBar - 1);
-        const time = `${bar}:0:${step * 0.25}`;
+        const time = positionToTime(bar, step);
         notes.push({
           pitch: rng.pick(['snare', 'tom']),
           time,

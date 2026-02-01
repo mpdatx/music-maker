@@ -104,8 +104,20 @@ export interface PadConfig {
 }
 
 export type ChordDegree =
+  // Major scale triads
   | 'I' | 'ii' | 'iii' | 'IV' | 'V' | 'vi' | 'vii°'
-  | 'Imaj7' | 'ii7' | 'iii7' | 'IVmaj7' | 'V7' | 'vi7' | 'vii7b5';
+  // Minor scale triads (lowercase = minor quality)
+  | 'i' | 'iv' | 'v'
+  // Borrowed/modal chords (uppercase = major quality on non-standard degrees)
+  | 'III' | 'VI' | 'VII'
+  // Major 7th chords
+  | 'Imaj7' | 'IVmaj7'
+  // Minor 7th chords
+  | 'ii7' | 'iii7' | 'vi7' | 'i7' | 'iv7'
+  // Dominant 7th chords
+  | 'V7' | 'I7' | 'IV7'
+  // Diminished
+  | 'vii7b5';
 
 export interface ChordProgression {
   id: string;

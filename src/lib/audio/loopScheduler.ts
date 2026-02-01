@@ -57,6 +57,12 @@ class LoopScheduler {
 
   setProgressionClock(clock: ProgressionClock): void {
     this.progressionClock = clock;
+
+    // Enable transport-level looping to keep all Parts synchronized
+    const transport = Tone.getTransport();
+    transport.loop = true;
+    transport.loopStart = 0;
+    transport.loopEnd = `${clock.totalBars}m`;
   }
 
   getProgressionClock(): ProgressionClock | null {
@@ -151,9 +157,9 @@ class LoopScheduler {
     const totalBars = clock.totalBars;
     const parts: Tone.Part[] = [];
 
-    // Create a part for each variation, offset to start at the correct bar
-    for (const variation of bundle.variations) {
-      const startBar = variation.chordIndex * barsPerChord;
+    // For instruments with only one variation (like drums), use simple looping
+    if (bundle.variations.length === 1) {
+      const variation = bundle.variations[0];
       const events = variation.notes.map(note => ({
         time: note.time,
         pitch: note.pitch,
@@ -165,10 +171,52 @@ class LoopScheduler {
         this.triggerNote(instrument, event, time);
       }, events);
 
+      // Drums loop at their own shorter interval
+      part.loop = true;
+      part.loopEnd = `${barsPerChord}m`;
+      part.start(0);
+      parts.push(part);
+    } else {
+      // For chord-aware instruments, flatten all variations into a single Part
+      // with absolute times, so they all loop together perfectly
+      const allEvents: Array<{
+        time: string;
+        pitch: string;
+        duration: string;
+        velocity: number;
+      }> = [];
+
+      for (const variation of bundle.variations) {
+        const startBar = variation.chordIndex * barsPerChord;
+
+        for (const note of variation.notes) {
+          // Parse the relative time and add the bar offset
+          const timeParts = note.time.split(':').map(Number);
+          const barOffset = timeParts[0] || 0;
+          const beat = timeParts[1] || 0;
+          const sixteenth = timeParts[2] || 0;
+
+          // Calculate absolute bar position
+          const absoluteBar = startBar + barOffset;
+
+          allEvents.push({
+            time: `${absoluteBar}:${beat}:${sixteenth}`,
+            pitch: note.pitch,
+            duration: note.duration,
+            velocity: note.velocity,
+          });
+        }
+      }
+
+      const part = new Tone.Part((time, event) => {
+        this.triggerNote(instrument, event, time);
+      }, allEvents);
+
+      // Part loops at the same interval as the transport
+      // This keeps everything synchronized
       part.loop = true;
       part.loopEnd = `${totalBars}m`;
-      // Start this variation at its chord position within the progression cycle
-      part.start(`${startBar}m`);
+      part.start(0);
       parts.push(part);
     }
 
@@ -363,6 +411,10 @@ class LoopScheduler {
       }
     }
     this.scheduledBundles.clear();
+
+    // Reset transport loop
+    const transport = Tone.getTransport();
+    transport.loop = false;
   }
 }
 

@@ -1,5 +1,5 @@
 import type { Note, GenerationParams, ChordDegree, LoopBundle, LoopVariation, GenrePreset } from '../types';
-import { SeededRandom, getChordTonesForDegree, getNoteInScale, resolveChordDegree } from './theory';
+import { SeededRandom, getChordTonesForDegree, getNoteInScale, resolveChordDegree, positionToTime } from './theory';
 import { getRhythmSteps, getGrooveProfile, applyGroove } from './rhythm';
 
 /**
@@ -44,7 +44,7 @@ function generateChordsVariation(
 
   for (let bar = 0; bar < bars; bar++) {
     for (const step of chordSteps) {
-      const time = `${bar}:0:${step.position * 0.25}`;
+      const time = positionToTime(bar, step.position);
       const duration = durationMap[step.duration] || step.duration;
 
       // Add all chord tones
