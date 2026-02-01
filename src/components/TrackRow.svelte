@@ -4,7 +4,7 @@
   import GridCell from './GridCell.svelte';
   import NoteButton from './NoteButton.svelte';
   import { getInstrumentIcon, isSampledInstrument } from '../lib/icons';
-  import { getScaleNotes, isNoteAvailableForInstrument } from '../lib/generators/theory';
+  import { getScaleNotes, noteToMidi } from '../lib/generators/theory';
   import { SAMPLED_INSTRUMENT_RANGES } from '../lib/generators';
   import { musicalKey, scale } from '../lib/stores';
 
@@ -50,9 +50,14 @@
   // Get notes for keys mode (one octave of the current scale)
   let scaleNotes = $derived(getScaleNotes($musicalKey, $scale, 4));
 
-  // Check if a note is available for the current instrument
+  // Check if a note is playable for the current instrument (within range)
+  // Tone.Sampler pitch-shifts between samples, so any note in range is playable
   function isNoteAvailable(note: string): boolean {
-    return isNoteAvailableForInstrument(note, track.type, SAMPLED_INSTRUMENT_RANGES);
+    const range = SAMPLED_INSTRUMENT_RANGES[track.type];
+    if (!range) return true; // Synth instruments have no restrictions
+    const midi = noteToMidi(note);
+    const [minMidi, maxMidi] = range;
+    return midi >= minMidi && midi <= maxMidi;
   }
 
   // Glissando state
