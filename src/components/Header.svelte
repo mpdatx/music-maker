@@ -9,7 +9,6 @@
 
   const dispatch = createEventDispatcher<{
     regenerateAll: void;
-    openSaveLoad: void;
     stopAll: void;
   }>();
 
@@ -212,9 +211,6 @@
     </button>
     <button class="action-btn" onclick={handleRegenerateAll} title="Regenerate all loops">
       🎲
-    </button>
-    <button onclick={() => dispatch('openSaveLoad')} title="Save/Load projects">
-      💾
     </button>
   </div>
 </header>
