@@ -14,6 +14,7 @@
     allCellProgress,
     loops,
     level = 0,
+    levelDb = -Infinity,
     onNotePress,
     onNoteRelease
   }: {
@@ -22,6 +23,7 @@
     allCellProgress: Record<string, number>;
     loops: Record<string, any>;
     level?: number;
+    levelDb?: number;
     onNotePress?: (trackId: string, note: string) => void;
     onNoteRelease?: (trackId: string, note: string) => void;
   } = $props();
@@ -221,7 +223,7 @@
           oninput={handleVolumeChange}
           title="Volume: {Math.round(track.volume * 100)}%"
         />
-        <div class="level-meter" title="Level: {Math.round(level * 100)}%">
+        <div class="level-meter" title="Level: {levelDb.toFixed(1)}dB">
           <div class="level-fill" style="width: {level * 100}%"></div>
         </div>
       </div>

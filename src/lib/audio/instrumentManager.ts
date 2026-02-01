@@ -120,12 +120,20 @@ class InstrumentManager {
     if (instrument) {
       const level = instrument.meter.getValue();
       const db = typeof level === 'number' ? level : level[0];
-      // Use a tighter range (-36dB to 0dB) with power curve for better visual response
-      const normalized = Math.max(0, Math.min(1, (db + 36) / 36));
-      // Apply power curve for better visual feedback (more sensitive to changes)
-      return Math.pow(normalized, 0.5);
+      // Map dB to 0-1: -48dB = 0, 0dB = 1, with steep curve
+      const normalized = Math.max(0, Math.min(1, (db + 48) / 48));
+      return Math.pow(normalized, 0.3);
     }
     return 0;
+  }
+
+  getTrackLevelDb(trackId: string): number {
+    const instrument = this.instruments.get(trackId);
+    if (instrument) {
+      const level = instrument.meter.getValue();
+      return typeof level === 'number' ? level : level[0];
+    }
+    return -Infinity;
   }
 
   disposeTrackInstrument(trackId: string): void {

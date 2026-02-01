@@ -18,11 +18,13 @@
   let cellProgress: Record<string, number> = {};
   // Level meters for each track (0-1)
   let trackLevels: Record<string, number> = {};
+  let trackLevelsDb: Record<string, number> = {};
   let animationFrame: number | null = null;
 
   function updateProgress() {
     const newProgress: Record<string, number> = {};
     const newLevels: Record<string, number> = {};
+    const newLevelsDb: Record<string, number> = {};
 
     for (const [key, state] of Object.entries(cellStates)) {
       if (state === 'active') {
@@ -34,10 +36,12 @@
     // Update track levels
     for (const track of $tracks) {
       newLevels[track.id] = instrumentManager.getTrackLevel(track.id);
+      newLevelsDb[track.id] = instrumentManager.getTrackLevelDb(track.id);
     }
 
     cellProgress = newProgress;
     trackLevels = newLevels;
+    trackLevelsDb = newLevelsDb;
     animationFrame = requestAnimationFrame(updateProgress);
   }
 
@@ -470,6 +474,7 @@
       allCellProgress={cellProgress}
       loops={$loops}
       level={trackLevels[track.id] ?? 0}
+      levelDb={trackLevelsDb[track.id] ?? -Infinity}
       onNotePress={handleNotePress}
       onNoteRelease={handleNoteRelease}
       on:cellTap={handleCellTap}
