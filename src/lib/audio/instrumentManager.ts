@@ -119,9 +119,11 @@ class InstrumentManager {
     const instrument = this.instruments.get(trackId);
     if (instrument) {
       const level = instrument.meter.getValue();
-      // Convert dB to 0-1 range (roughly -60dB to 0dB)
       const db = typeof level === 'number' ? level : level[0];
-      return Math.max(0, Math.min(1, (db + 60) / 60));
+      // Use a tighter range (-36dB to 0dB) with power curve for better visual response
+      const normalized = Math.max(0, Math.min(1, (db + 36) / 36));
+      // Apply power curve for better visual feedback (more sensitive to changes)
+      return Math.pow(normalized, 0.5);
     }
     return 0;
   }
