@@ -1,10 +1,11 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
-  import { project, tracks, loops, playback, isPlaying, genre, playMode } from '../lib/stores';
-  import { initAudio, transport, instrumentManager, loopScheduler, preloadInstruments, isSampledInstrument } from '../lib/audio';
+  import { project, tracks, loops, playback, isPlaying, genre, playMode, bpm } from '../lib/stores';
+  import { currentProgression } from '../lib/stores/progression';
+  import { initAudio, transport, instrumentManager, loopScheduler, preloadInstruments, isSampledInstrument, ProgressionClock } from '../lib/audio';
   import { GENRE_TRACKS } from '../lib/stores/project';
-  import { generateLoop, GENRE_PRESETS } from '../lib/generators';
-  import type { Track, LoopState, GenrePreset, InstrumentType } from '../lib/types';
+  import { generateLoop, generateLoopBundle, GENRE_PRESETS } from '../lib/generators';
+  import type { Track, LoopState, GenrePreset, InstrumentType, LoopBundle } from '../lib/types';
   import TrackRow from './TrackRow.svelte';
   import LoopEditorModal from './LoopEditorModal.svelte';
 
@@ -103,6 +104,39 @@
     }
   }
 
+  // Ensure progression clock is set up for bundle playback
+  function ensureProgressionClock() {
+    const progression = $currentProgression;
+    const currentBpm = $bpm;
+    const barsPerChord = 2; // Standard: 2 bars per chord
+
+    const clock = new ProgressionClock({
+      progressionId: progression.id,
+      progressionLength: progression.chords.length,
+      barsPerChord,
+      bpm: currentBpm,
+    });
+    loopScheduler.setProgressionClock(clock);
+  }
+
+  // Generate a bundle for a track using the current progression
+  function generateBundleForTrack(track: Track, seed?: number): LoopBundle {
+    const projectData = project.getSnapshot();
+    const progression = $currentProgression;
+    const actualSeed = seed ?? Math.floor(Math.random() * 1000000);
+
+    return generateLoopBundle(
+      track.type,
+      GENRE_PRESETS[$genre].defaultParams,
+      projectData.key,
+      projectData.scale,
+      $genre,
+      actualSeed,
+      progression.id,
+      2 // bars per variation
+    );
+  }
+
   async function handleCellTap(e: CustomEvent<{ trackId: string; col: number }>) {
     await ensureAudio();
 
@@ -112,7 +146,7 @@
 
     const cell = track.cells.find(c => c.col === col);
     const loopId = cell?.loopId;
-    const loop = loopId ? $loops[loopId] : null;
+    const existingLoop = loopId ? $loops[loopId] : null;
 
     const key = getCellKey(trackId, col);
     const currentState = cellStates[key] ?? 'inactive';
@@ -123,19 +157,26 @@
       cellStates[key] = 'inactive';
       cellStates = { ...cellStates }; // trigger reactivity
     } else {
-      // Generate loop if needed
-      let actualLoop = loop;
-      if (!actualLoop) {
+      // Get seed from existing loop or generate new one
+      const seed = existingLoop?.seed ?? Math.floor(Math.random() * 1000000);
+
+      // Store a base loop for the editor if none exists
+      if (!existingLoop) {
         const projectData = project.getSnapshot();
-        actualLoop = generateLoop(
+        const baseLoop = generateLoop(
           track.type,
           GENRE_PRESETS[$genre].defaultParams,
           projectData.key,
-          projectData.scale
+          projectData.scale,
+          seed
         );
-        project.addLoop(actualLoop);
-        project.setCellLoop(trackId, col, actualLoop.id);
+        project.addLoop(baseLoop);
+        project.setCellLoop(trackId, col, baseLoop.id);
       }
+
+      // Generate a chord-aware bundle for playback
+      ensureProgressionClock();
+      const bundle = generateBundleForTrack(track, seed);
 
       // Clear other cells in this track
       const newStates = { ...cellStates };
@@ -145,8 +186,8 @@
         }
       }
 
-      // Start playing
-      loopScheduler.scheduleLoop(trackId, actualLoop);
+      // Start playing with bundle (chord-aware variations)
+      loopScheduler.scheduleBundleLoop(trackId, bundle, $bpm);
       newStates[key] = 'active';
       cellStates = newStates;
 
@@ -176,23 +217,36 @@
     } else {
       // Queue to play
       const cell = track.cells.find(c => c.col === col);
-      let loopId = cell?.loopId;
-      let loop = loopId ? $loops[loopId] : null;
+      const existingLoopId = cell?.loopId;
+      const existingLoop = existingLoopId ? $loops[existingLoopId] : null;
 
-      if (!loop) {
+      // Get seed from existing loop or generate new one
+      const seed = existingLoop?.seed ?? Math.floor(Math.random() * 1000000);
+
+      // Store a base loop for the editor if none exists
+      if (!existingLoop) {
         const projectData = project.getSnapshot();
-        loop = generateLoop(
+        const baseLoop = generateLoop(
           track.type,
           GENRE_PRESETS[$genre].defaultParams,
           projectData.key,
-          projectData.scale
+          projectData.scale,
+          seed
         );
-        project.addLoop(loop);
-        project.setCellLoop(trackId, col, loop.id);
+        project.addLoop(baseLoop);
+        project.setCellLoop(trackId, col, baseLoop.id);
       }
 
-      // Queue with callback to update state when it starts
-      loopScheduler.queueLoop(trackId, loop, () => {
+      // Create a dummy loop for queueLoop timing, but schedule bundle when it fires
+      const dummyLoop = existingLoop ?? $loops[cell?.loopId ?? ''];
+
+      // Queue with callback that schedules the bundle when it starts
+      loopScheduler.queueLoop(trackId, dummyLoop ?? { id: '', type: track.type, bars: 2, seed, generationParams: GENRE_PRESETS[$genre].defaultParams, notes: [] }, () => {
+        // Generate and schedule the chord-aware bundle
+        ensureProgressionClock();
+        const bundle = generateBundleForTrack(track, seed);
+        loopScheduler.scheduleBundleLoop(trackId, bundle, $bpm);
+
         // Clear other cells in this track and set this one to active
         const newStates = { ...cellStates };
         for (const [k, state] of Object.entries(newStates)) {
@@ -282,27 +336,31 @@
       return;
     }
 
+    // Set up progression clock for bundle playback
+    ensureProgressionClock();
+
     const newStates = { ...cellStates };
 
-    // Start loop for each track in this column
+    // Start bundle for each track in this column
     for (const track of $tracks) {
       const cell = track.cells.find(c => c.col === col);
       const loopId = cell?.loopId;
-      const loop = loopId ? $loops[loopId] : null;
+      const existingLoop = loopId ? $loops[loopId] : null;
 
-      if (loop) {
-        // Clear other cells in this track
-        for (const [k] of Object.entries(newStates)) {
-          if (k.startsWith(`${track.id}:`)) {
-            newStates[k] = 'inactive';
-          }
+      // Clear other cells in this track
+      for (const [k] of Object.entries(newStates)) {
+        if (k.startsWith(`${track.id}:`)) {
+          newStates[k] = 'inactive';
         }
-
-        // Start this cell
-        const key = getCellKey(track.id, col);
-        loopScheduler.scheduleLoop(track.id, loop);
-        newStates[key] = 'active';
       }
+
+      // Generate and schedule a chord-aware bundle
+      const seed = existingLoop?.seed ?? Math.floor(Math.random() * 1000000);
+      const bundle = generateBundleForTrack(track, seed);
+      loopScheduler.scheduleBundleLoop(track.id, bundle, $bpm);
+
+      const key = getCellKey(track.id, col);
+      newStates[key] = 'active';
     }
 
     cellStates = newStates;
