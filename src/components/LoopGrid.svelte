@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import { project, tracks, loops, playback, isPlaying, genre, playMode, bpm } from '../lib/stores';
-  import { currentProgression } from '../lib/stores/progression';
+  import { currentProgression, progressionStore } from '../lib/stores/progression';
   import { initAudio, transport, instrumentManager, loopScheduler, preloadInstruments, isSampledInstrument, ProgressionClock } from '../lib/audio';
   import { GENRE_TRACKS } from '../lib/stores/project';
   import { generateLoop, generateLoopBundle, GENRE_PRESETS } from '../lib/generators';
@@ -72,6 +72,11 @@
     trackPeaks = newPeaks;
     trackPeaksDb = newPeaksDb;
     trackMaxDb = newMaxDb;
+
+    // Update current chord index for visual feedback
+    const chordIndex = loopScheduler.getCurrentChordIndex();
+    progressionStore.setChordIndex(chordIndex);
+
     animationFrame = requestAnimationFrame(updateProgress);
   }
 
