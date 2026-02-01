@@ -454,17 +454,33 @@ const DRUM_PRESETS: Record<GenrePreset, DrumKitPreset> = {
   },
 };
 
+// Gain staging for drums: reduce output to prevent clipping
+const DRUM_VOLUME_DB = {
+  kick: -10,     // Kick is fundamental, needs presence
+  snare: -12,    // Snare is percussive
+  hihat: -15,    // High frequencies can be harsh
+  openhat: -15,  // High frequencies can be harsh
+  tom: -12,      // Toms are percussive
+  clap: -12,     // Clap is percussive
+};
+
 export function createDrumKit(genre: GenrePreset = 'lofi-hiphop'): DrumKit {
   const preset = DRUM_PRESETS[genre] ?? DRUM_PRESETS['lofi-hiphop'];
 
   const kick = new Tone.MembraneSynth(preset.kick);
+  kick.volume.value = DRUM_VOLUME_DB.kick;
   const snare = new Tone.NoiseSynth(preset.snare);
+  snare.volume.value = DRUM_VOLUME_DB.snare;
   const hihat = new Tone.MetalSynth(preset.hihat);
   hihat.frequency.value = 400;
+  hihat.volume.value = DRUM_VOLUME_DB.hihat;
   const openhat = new Tone.MetalSynth(preset.openhat);
   openhat.frequency.value = 400;
+  openhat.volume.value = DRUM_VOLUME_DB.openhat;
   const tom = new Tone.MembraneSynth(preset.tom);
+  tom.volume.value = DRUM_VOLUME_DB.tom;
   const clap = new Tone.NoiseSynth(preset.clap);
+  clap.volume.value = DRUM_VOLUME_DB.clap;
 
   return { kick, snare, hihat, openhat, tom, clap };
 }

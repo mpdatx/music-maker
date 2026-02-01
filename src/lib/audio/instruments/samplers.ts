@@ -218,6 +218,10 @@ export function getSampledInstrumentTypes(): SampledInstrumentType[] {
   return SAMPLED_INSTRUMENT_TYPES;
 }
 
+// Gain staging for sampled instruments
+// Samples are typically normalized, so -12 dB provides good headroom
+const SAMPLER_VOLUME_DB = -12;
+
 export async function createSampledInstrument(type: SampledInstrumentType): Promise<Tone.Sampler> {
   // Return cached sampler if available
   const cached = samplerCache.get(type);
@@ -243,6 +247,8 @@ export async function createSampledInstrument(type: SampledInstrumentType): Prom
       urls: samples,
       baseUrl,
       onload: () => {
+        // Apply gain staging
+        sampler.volume.value = SAMPLER_VOLUME_DB;
         samplerCache.set(type, sampler);
         loadingPromises.delete(type);
         resolve(sampler);

@@ -584,17 +584,37 @@ const GENRE_SYNTH_PRESETS: Record<GenrePreset, GenreSynthPresets> = {
   },
 };
 
+// Gain staging: reduce synth output to prevent clipping
+// Different instruments need different levels based on their characteristics
+const SYNTH_VOLUME_DB: Record<string, number> = {
+  bass: -15,      // Bass is loud and sustained
+  keys: -12,      // Keys can have multiple voices
+  lead: -12,      // Lead is typically monophonic
+  pad: -18,       // Pads stack and sustain, need more headroom
+  pluck: -12,     // Pluck is percussive, quick decay
+  strings: -18,   // Strings sustain and layer
+  organ: -15,     // Organ sustains
+  choir: -18,     // Choir sustains and layers
+  epiano: -12,    // E-piano is percussive
+  kalimba: -12,   // Kalimba is percussive
+};
+
 export function createMelodicSynth(type: InstrumentType, genre: GenrePreset = 'lofi-hiphop'): MelodicSynth {
   const genrePresets = GENRE_SYNTH_PRESETS[genre] ?? GENRE_SYNTH_PRESETS['lofi-hiphop'];
   const creator = genrePresets[type as keyof GenreSynthPresets];
+  let synth: MelodicSynth;
   if (!creator) {
     // Fallback to a basic synth if type not found
-    return new Tone.PolySynth(Tone.Synth, {
+    synth = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: 'sine' },
       envelope: { attack: 0.05, decay: 0.3, sustain: 0.5, release: 0.5 },
     });
+  } else {
+    synth = creator();
   }
-  return creator();
+  // Apply gain staging
+  synth.volume.value = SYNTH_VOLUME_DB[type] ?? -12;
+  return synth;
 }
 
 export function getGenrePresetNames(): GenrePreset[] {

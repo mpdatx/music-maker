@@ -119,10 +119,7 @@ class InstrumentManager {
     const instrument = this.instruments.get(trackId);
     if (instrument) {
       const level = instrument.meter.getValue();
-      const rawDb = typeof level === 'number' ? level : level[0];
-      // Offset by typical synth output level (~36 dB hot) to normalize display
-      // This makes typical peak levels show near 0 dB
-      const db = rawDb - 36;
+      const db = typeof level === 'number' ? level : level[0];
       // Map dB to 0-1: -48dB = 0, 0dB = 1
       const normalized = Math.max(0, Math.min(1, (db + 48) / 48));
       return Math.pow(normalized, 0.3);
@@ -134,9 +131,7 @@ class InstrumentManager {
     const instrument = this.instruments.get(trackId);
     if (instrument) {
       const level = instrument.meter.getValue();
-      const rawDb = typeof level === 'number' ? level : level[0];
-      // Offset by typical synth output level to show meaningful relative values
-      return rawDb - 36;
+      return typeof level === 'number' ? level : level[0];
     }
     return -Infinity;
   }
