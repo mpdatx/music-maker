@@ -67,8 +67,9 @@
     for (const track of $tracks) {
       instrumentManager.createTrackInstrument(track.id, track.type);
       instrumentManager.setTrackVolume(track.id, track.volume);
-      instrumentManager.setTrackMute(track.id, track.muted);
     }
+    // Apply mute/solo state after all instruments are created
+    updateSoloMuting();
   }
 
   function getCellKey(trackId: string, col: number): string {
@@ -99,8 +100,9 @@
       for (const track of $tracks) {
         instrumentManager.createTrackInstrument(track.id, track.type);
         instrumentManager.setTrackVolume(track.id, track.volume);
-        instrumentManager.setTrackMute(track.id, track.muted);
       }
+      // Apply mute/solo state after all instruments are created
+      updateSoloMuting();
     }
   }
 
