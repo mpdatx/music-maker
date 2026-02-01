@@ -25,6 +25,13 @@ export type SampledInstrumentType =
 
 export type InstrumentType = SynthInstrumentType | SampledInstrumentType;
 
+export type CounterMelodyTechnique = 'rhythmic' | 'harmonic' | 'contrary';
+
+export interface CounterMelodyConfig {
+  enabled: boolean;
+  technique: CounterMelodyTechnique;
+}
+
 export type ScaleType = 'major' | 'minor' | 'dorian' | 'mixolydian' | 'pentatonic' | 'chromatic';
 
 export interface Note {
@@ -66,6 +73,7 @@ export interface Track {
   solo: boolean;
   effects: EffectConfig[];
   cells: { col: number; loopId: string | null }[];
+  counterMelody?: CounterMelodyConfig;
 }
 
 export interface Project {
