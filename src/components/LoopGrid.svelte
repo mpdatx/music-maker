@@ -19,9 +19,11 @@
   // Level meters for each track (0-1)
   let trackLevels: Record<string, number> = {};
   let trackLevelsDb: Record<string, number> = {};
-  // Peak hold levels (decay slowly)
+  // Peak hold levels (decay slowly for visual indicator)
   let trackPeaks: Record<string, number> = {};
   let trackPeaksDb: Record<string, number> = {};
+  // True maximum dB (never decays, for numeric display)
+  let trackMaxDb: Record<string, number> = {};
   let animationFrame: number | null = null;
 
   function updateProgress() {
@@ -30,6 +32,7 @@
     const newLevelsDb: Record<string, number> = {};
     const newPeaks: Record<string, number> = { ...trackPeaks };
     const newPeaksDb: Record<string, number> = { ...trackPeaksDb };
+    const newMaxDb: Record<string, number> = { ...trackMaxDb };
 
     for (const [key, state] of Object.entries(cellStates)) {
       if (state === 'active') {
@@ -48,6 +51,7 @@
       // Update peak if current level is higher, otherwise decay
       const currentPeak = newPeaks[track.id] ?? 0;
       const currentPeakDb = newPeaksDb[track.id] ?? -Infinity;
+      const currentMaxDb = newMaxDb[track.id] ?? -Infinity;
       if (level >= currentPeak) {
         newPeaks[track.id] = level;
         newPeaksDb[track.id] = db;
@@ -56,6 +60,10 @@
         newPeaks[track.id] = Math.max(0, currentPeak - 0.012);
         newPeaksDb[track.id] = currentPeakDb - 0.5;
       }
+      // True max never decays
+      if (db > currentMaxDb) {
+        newMaxDb[track.id] = db;
+      }
     }
 
     cellProgress = newProgress;
@@ -63,6 +71,7 @@
     trackLevelsDb = newLevelsDb;
     trackPeaks = newPeaks;
     trackPeaksDb = newPeaksDb;
+    trackMaxDb = newMaxDb;
     animationFrame = requestAnimationFrame(updateProgress);
   }
 
@@ -497,7 +506,7 @@
       level={trackLevels[track.id] ?? 0}
       levelDb={trackLevelsDb[track.id] ?? -Infinity}
       peak={trackPeaks[track.id] ?? 0}
-      peakDb={trackPeaksDb[track.id] ?? -Infinity}
+      peakDb={trackMaxDb[track.id] ?? -Infinity}
       onNotePress={handleNotePress}
       onNoteRelease={handleNoteRelease}
       on:cellTap={handleCellTap}
