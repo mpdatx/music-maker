@@ -94,9 +94,33 @@ Samples are provided in three formats:
 - `.ogg` - Fallback for browsers without MP3 support
 - `.wav` - Original quality (larger files)
 
+## Synth Instruments (Tone.js)
+
+The app also uses synthesized instruments via Tone.js that don't rely on samples:
+
+### Currently Implemented
+| Instrument | Synth Type | Description |
+|------------|------------|-------------|
+| choir | PolySynth (Synth/AMSynth) | Soft vocal pad sounds with slow attack |
+| epiano | PolySynth (FMSynth) | Classic Rhodes/Wurlitzer FM sound |
+| kalimba | PolySynth (FMSynth) | Thumb piano, bright plucky tones |
+
+### Recommended Additions
+These were identified as easy to add using Tone.js synthesis:
+
+| Instrument | Synth Type | Description |
+|------------|------------|-------------|
+| bell | FMSynth | Metallic, bright vibraphone/glockenspiel tones |
+| brass | MonoSynth | Punchy horn stabs with filter envelope |
+| sub | MonoSynth | Deep sub-bass sine waves for low-end weight |
+| marimba | FMSynth | Wooden mallet percussion tones |
+
+These synth instruments have full chromatic coverage and avoid the sample sparseness issues.
+
 ## Code Integration
 
 Sample paths are configured in:
 - `src/lib/audio/instruments/samplers.ts` - Sample URL mappings
+- `src/lib/audio/instruments/melodic.ts` - Genre-specific synth presets
 - `src/lib/generators/theory.ts` - Sparse instrument note lists for quantization
 - `src/lib/generators/index.ts` - Instrument range constraints

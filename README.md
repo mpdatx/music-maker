@@ -26,7 +26,7 @@ Icons from [game-icons.net](https://game-icons.net), licensed under [CC BY 3.0](
 Icons made by:
 - **Caro Asercion** - drum-kit, pipe-organ, grand-piano
 - **Delapouite** ([delapouite.com](http://delapouite.com)) - maracas, guitar-bass-head, piano-keys, harp, xylophone
-- **Lorc** ([lorcblog.blogspot.com](http://lorcblog.blogspot.com)) - guitar, sing
+- **Lorc** ([lorcblog.blogspot.com](http://lorcblog.blogspot.com)) - guitar, sing, viola (used for cello)
 - **Skoll** - sound-waves
 - **Zajkonur** - violin
 
