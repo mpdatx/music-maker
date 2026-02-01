@@ -303,6 +303,11 @@
     updateSoloMuting();
   }
 
+  function handleVolume(e: CustomEvent<{ trackId: string; volume: number }>) {
+    project.setTrackVolume(e.detail.trackId, e.detail.volume);
+    instrumentManager.setTrackVolume(e.detail.trackId, e.detail.volume);
+  }
+
   function updateSoloMuting() {
     const trackList = $tracks;
     const anySoloed = trackList.some(t => t.solo);
@@ -462,6 +467,7 @@
       on:cellContextMenu={handleCellContextMenu}
       on:mute={handleMute}
       on:solo={handleSolo}
+      on:volume={handleVolume}
     />
   {/each}
 </div>

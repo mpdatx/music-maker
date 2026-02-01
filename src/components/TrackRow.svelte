@@ -105,7 +105,13 @@
     cellContextMenu: { trackId: string; col: number };
     mute: { trackId: string };
     solo: { trackId: string };
+    volume: { trackId: string; volume: number };
   }>();
+
+  function handleVolumeChange(e: Event) {
+    const value = parseFloat((e.target as HTMLInputElement).value);
+    dispatch('volume', { trackId: track.id, volume: value });
+  }
 
   const INSTRUMENT_COLORS: Record<string, string> = {
     // Synth instruments
@@ -203,6 +209,16 @@
         >
           K
         </button>
+        <input
+          type="range"
+          class="volume-slider"
+          min="0"
+          max="1"
+          step="0.01"
+          value={track.volume}
+          oninput={handleVolumeChange}
+          title="Volume: {Math.round(track.volume * 100)}%"
+        />
       </div>
     </div>
   </div>
@@ -358,6 +374,45 @@
     background: #06b6d4;
     color: #fff;
     border-color: #06b6d4;
+  }
+
+  .volume-slider {
+    width: 50px;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #444;
+    border-radius: 2px;
+    cursor: pointer;
+    margin-left: 0.25rem;
+  }
+
+  .volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 10px;
+    height: 10px;
+    background: #888;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .volume-slider::-webkit-slider-thumb:hover {
+    background: #aaa;
+  }
+
+  .volume-slider::-moz-range-thumb {
+    width: 10px;
+    height: 10px;
+    background: #888;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+  }
+
+  .volume-slider::-moz-range-thumb:hover {
+    background: #aaa;
   }
 
   .cells {
