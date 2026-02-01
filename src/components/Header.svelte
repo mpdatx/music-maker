@@ -122,14 +122,27 @@
       <button
         class:active={$playMode === 'loop'}
         onclick={() => playMode.set('loop')}
+        title="Loop mode"
       >
-        Loops
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
       </button>
       <button
         class:active={$playMode === 'pad'}
         onclick={() => playMode.set('pad')}
+        title="Pad mode"
       >
-        Pads
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+          <rect x="2" y="8" width="3" height="12" rx="0.5"/>
+          <rect x="6" y="4" width="3" height="16" rx="0.5"/>
+          <rect x="10" y="8" width="3" height="12" rx="0.5"/>
+          <rect x="14" y="4" width="3" height="16" rx="0.5"/>
+          <rect x="18" y="8" width="3" height="12" rx="0.5"/>
+        </svg>
       </button>
     </div>
   </div>
@@ -160,23 +173,24 @@
         {/if}
       </div>
 
-      <label>
-        Key:
-      <select value={$musicalKey} onchange={handleKeyChange}>
-        {#each keys as k}
-          <option value={k}>{k}</option>
-        {/each}
-      </select>
-    </label>
-
-    <label>
-      Scale:
-      <select value={$scale} onchange={handleScaleChange}>
-        {#each scales as s}
-          <option value={s}>{s}</option>
-        {/each}
-      </select>
-    </label>
+      <div class="key-scale-stack">
+        <label>
+          <span class="label-text">Key</span>
+          <select value={$musicalKey} onchange={handleKeyChange}>
+            {#each keys as k}
+              <option value={k}>{k}</option>
+            {/each}
+          </select>
+        </label>
+        <label>
+          <span class="label-text">Scale</span>
+          <select value={$scale} onchange={handleScaleChange}>
+            {#each scales as s}
+              <option value={s}>{s}</option>
+            {/each}
+          </select>
+        </label>
+      </div>
 
     <ProgressionDisplay />
 
@@ -367,11 +381,13 @@
     background: transparent;
     border: none;
     color: #888;
-    padding: 0.35rem 0.75rem;
+    padding: 0.4rem;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 0.8rem;
     transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .mode-toggle button:hover {
@@ -381,6 +397,33 @@
   .mode-toggle button.active {
     background: #7c3aed;
     color: #fff;
+  }
+
+  .mode-toggle button svg {
+    display: block;
+  }
+
+  .key-scale-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .key-scale-stack label {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .key-scale-stack .label-text {
+    font-size: 0.65rem;
+    width: 32px;
+    text-align: right;
+  }
+
+  .key-scale-stack select {
+    padding: 0.15rem 0.35rem;
+    font-size: 0.7rem;
   }
 
   .genre-picker {
