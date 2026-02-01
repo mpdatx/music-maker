@@ -294,7 +294,10 @@ describe('Sparse Instrument Sample Validation', () => {
     }
   });
 
-  describe('generated notes for sparse instruments are quantized to actual samples', () => {
+  // Note: We no longer quantize notes to exact sample points because Tone.Sampler
+  // automatically pitch-shifts between sample points. We only verify notes are
+  // within the instrument's playable range.
+  describe('generated notes for sparse instruments are within playable range', () => {
     for (const genre of ALL_GENRES) {
       const config = GENRES[genre];
       const sparseTracksInGenre = config.tracks.filter(t =>
@@ -306,9 +309,11 @@ describe('Sparse Instrument Sample Validation', () => {
       describe(`${genre}`, () => {
         for (const track of sparseTracksInGenre) {
           const instrumentType = track.type as InstrumentType;
-          const validSamples = new Set(SPARSE_INSTRUMENT_SAMPLES[instrumentType]);
+          const range = SAMPLED_INSTRUMENT_RANGES[instrumentType];
+          if (!range) continue;
+          const [minMidi, maxMidi] = range;
 
-          it(`${track.name} (${instrumentType}) notes match available samples`, () => {
+          it(`${track.name} (${instrumentType}) notes are within range`, () => {
             const loop = generateLoop(
               instrumentType,
               testParams,
@@ -318,10 +323,11 @@ describe('Sparse Instrument Sample Validation', () => {
               2
             );
 
-            // Every note should be a valid sample for this instrument
+            // Every note should be within the instrument's playable range
             for (const note of loop.notes) {
               const midi = noteToMidi(note.pitch);
-              expect(validSamples.has(midi)).toBe(true);
+              expect(midi).toBeGreaterThanOrEqual(minMidi);
+              expect(midi).toBeLessThanOrEqual(maxMidi);
             }
           });
         }
@@ -329,7 +335,7 @@ describe('Sparse Instrument Sample Validation', () => {
     }
   });
 
-  describe('generated bundle notes for sparse instruments are quantized to actual samples', () => {
+  describe('generated bundle notes for sparse instruments are within playable range', () => {
     for (const genre of ALL_GENRES) {
       const config = GENRES[genre];
       const sparseTracksInGenre = config.tracks.filter(t =>
@@ -341,9 +347,11 @@ describe('Sparse Instrument Sample Validation', () => {
       describe(`${genre}`, () => {
         for (const track of sparseTracksInGenre) {
           const instrumentType = track.type as InstrumentType;
-          const validSamples = new Set(SPARSE_INSTRUMENT_SAMPLES[instrumentType]);
+          const range = SAMPLED_INSTRUMENT_RANGES[instrumentType];
+          if (!range) continue;
+          const [minMidi, maxMidi] = range;
 
-          it(`${track.name} (${instrumentType}) bundle notes match available samples`, () => {
+          it(`${track.name} (${instrumentType}) bundle notes are within range`, () => {
             const bundle = generateLoopBundle(
               instrumentType,
               testParams,
@@ -353,11 +361,12 @@ describe('Sparse Instrument Sample Validation', () => {
               12345
             );
 
-            // Every note in every variation should be a valid sample
+            // Every note in every variation should be within range
             for (const variation of bundle.variations) {
               for (const note of variation.notes) {
                 const midi = noteToMidi(note.pitch);
-                expect(validSamples.has(midi)).toBe(true);
+                expect(midi).toBeGreaterThanOrEqual(minMidi);
+                expect(midi).toBeLessThanOrEqual(maxMidi);
               }
             }
           });

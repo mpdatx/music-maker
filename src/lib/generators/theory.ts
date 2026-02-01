@@ -71,8 +71,10 @@ export function quantizeToNearestSample(midi: number, sampleNotes: number[]): nu
   return closest;
 }
 
-// Clamp note to range and quantize to nearest sample for sparse instruments
-export function clampAndQuantizeNote(note: string, minMidi: number, maxMidi: number, instrumentType: string): string {
+// Clamp note to range for sampled instruments
+// Note: Tone.Sampler automatically pitch-shifts between sample points,
+// so we only need to ensure notes are within the instrument's playable range
+export function clampAndQuantizeNote(note: string, minMidi: number, maxMidi: number, _instrumentType: string): string {
   let midi = noteToMidi(note);
 
   // Transpose by octaves until within range
@@ -86,12 +88,6 @@ export function clampAndQuantizeNote(note: string, minMidi: number, maxMidi: num
   // Clamp if still out of range
   if (midi < minMidi) midi = minMidi;
   if (midi > maxMidi) midi = maxMidi;
-
-  // For sparse instruments, quantize to nearest sample
-  const sampleNotes = SPARSE_INSTRUMENT_SAMPLES[instrumentType];
-  if (sampleNotes) {
-    midi = quantizeToNearestSample(midi, sampleNotes);
-  }
 
   return midiToNote(midi);
 }
