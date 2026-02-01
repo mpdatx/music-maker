@@ -25,30 +25,18 @@
     oncontextmenu?: () => void;
   } = $props();
 
-  // Convert notes to a grid visualization (8 columns x 4 rows)
-  const GRID_COLS = 8;
-  const GRID_ROWS = 4;
-
-  // Per-instrument MIDI note ranges for precise visualization
-  // [lowNote, highNote] in MIDI note numbers (C4 = 60)
-  const INSTRUMENT_RANGES: Record<string, [number, number]> = {
-    bass: [28, 48],      // E1 to C3 (bass range)
-    keys: [48, 72],      // C3 to C5
-    lead: [60, 84],      // C4 to C6
-    pad: [48, 72],       // C3 to C5
-    pluck: [48, 84],     // C3 to C6
-    strings: [48, 72],   // C3 to C5
-    organ: [48, 72],     // C3 to C5
-    choir: [48, 72],     // C3 to C5
-    epiano: [48, 72],    // C3 to C5
-    kalimba: [60, 96],   // C4 to C7 (bright, high range)
-    drums: [0, 0],       // Special handling
-    percussion: [0, 0],  // Special handling
-  };
+  // Staff visualization constants
+  const STAFF_LINES = 5;
+  const STAFF_POSITIONS = 12; // Lines + spaces + some ledger room
 
   const NOTE_TO_MIDI: Record<string, number> = {
     'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5,
     'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11
+  };
+
+  // Diatonic note positions (ignoring sharps/flats for staff placement)
+  const DIATONIC_POSITION: Record<number, number> = {
+    0: 0, 1: 0, 2: 1, 3: 1, 4: 2, 5: 3, 6: 3, 7: 4, 8: 4, 9: 5, 10: 5, 11: 6
   };
 
   function pitchToMidi(pitch: string): number {
@@ -59,14 +47,41 @@
     return (octave + 1) * 12 + NOTE_TO_MIDI[noteName];
   }
 
-  function getVisualizationGrid(): boolean[][] {
-    const grid: boolean[][] = Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS).fill(false));
-    if (!notes || notes.length === 0) return grid;
+  // Convert MIDI note to staff position (0 = bottom, higher = up)
+  // Uses treble clef for most instruments, bass clef for bass
+  function midiToStaffPosition(midi: number, useBassClef: boolean): number {
+    const noteInOctave = midi % 12;
+    const octave = Math.floor(midi / 12) - 1;
+    const diatonicPos = DIATONIC_POSITION[noteInOctave];
 
+    if (useBassClef) {
+      // Bass clef: Middle line (line 3) = D3 (MIDI 50)
+      // D3 = octave 3, diatonic pos 1
+      const d3Position = 3 * 7 + 1;
+      const notePosition = octave * 7 + diatonicPos;
+      return (notePosition - d3Position) + 6; // 6 = middle of our 12 positions
+    } else {
+      // Treble clef: Middle line (line 3) = B4 (MIDI 71)
+      // B4 = octave 4, diatonic pos 6
+      const b4Position = 4 * 7 + 6;
+      const notePosition = octave * 7 + diatonicPos;
+      return (notePosition - b4Position) + 6; // 6 = middle of our 12 positions
+    }
+  }
+
+  interface NotePosition {
+    x: number; // 0-100 percentage
+    y: number; // 0-100 percentage (0 = top)
+    isAccidental: boolean;
+  }
+
+  function getStaffNotes(): NotePosition[] {
+    if (!notes || notes.length === 0) return [];
+
+    const useBassClef = ['bass', 'bass-electric', 'contrabass', 'tuba'].includes(instrumentType);
+    const isDrums = ['drums', 'percussion'].includes(instrumentType);
     const totalSteps = bars * 16;
-    const stepsPerCol = totalSteps / GRID_COLS;
-    const [lowNote, highNote] = INSTRUMENT_RANGES[instrumentType] || [48, 72];
-    const noteRange = highNote - lowNote;
+    const positions: NotePosition[] = [];
 
     for (const note of notes) {
       const timeParts = note.time.split(':').map(Number);
@@ -75,27 +90,38 @@
       const sixteenth = timeParts[2] || 0;
       const step = bar * 16 + beat * 4 + sixteenth;
 
-      const col = Math.min(Math.floor(step / stepsPerCol), GRID_COLS - 1);
+      const x = (step / totalSteps) * 100;
 
-      let row = 1;
-      if (note.pitch) {
-        if (['kick', 'snare', 'hihat', 'openhat', 'tom', 'clap'].includes(note.pitch)) {
-          const drumMap: Record<string, number> = { kick: 3, snare: 2, tom: 2, clap: 1, hihat: 0, openhat: 0 };
-          row = drumMap[note.pitch] ?? 1;
-        } else {
-          const midi = pitchToMidi(note.pitch);
-          const normalized = (midi - lowNote) / noteRange;
-          row = Math.max(0, Math.min(GRID_ROWS - 1, GRID_ROWS - 1 - Math.floor(normalized * GRID_ROWS)));
-        }
+      let y: number;
+      let isAccidental = false;
+
+      if (isDrums) {
+        // Map drum sounds to staff positions
+        const drumPositions: Record<string, number> = {
+          hihat: 10, openhat: 10, clap: 8, snare: 6, tom: 4, kick: 2
+        };
+        const staffPos = drumPositions[note.pitch] ?? 6;
+        y = 100 - (staffPos / STAFF_POSITIONS) * 100;
+      } else if (note.pitch) {
+        const midi = pitchToMidi(note.pitch);
+        const noteInOctave = midi % 12;
+        isAccidental = [1, 3, 6, 8, 10].includes(noteInOctave); // C#, D#, F#, G#, A#
+        const staffPos = midiToStaffPosition(midi, useBassClef);
+        // Clamp to visible range
+        const clampedPos = Math.max(0, Math.min(STAFF_POSITIONS - 1, staffPos));
+        y = 100 - (clampedPos / (STAFF_POSITIONS - 1)) * 100;
+      } else {
+        y = 50;
       }
 
-      grid[row][col] = true;
+      positions.push({ x, y, isAccidental });
     }
 
-    return grid;
+    return positions;
   }
 
-  let visualGrid = $derived(getVisualizationGrid());
+  let staffNotes = $derived(getStaffNotes());
+  let isDrums = $derived(['drums', 'percussion'].includes(instrumentType));
 
   let lastTapTime = 0;
   const DOUBLE_TAP_DELAY = 300;
@@ -143,13 +169,30 @@
     <div class="progress-ring" style="background: {getProgressStyle(progress)}"></div>
   {/if}
   {#if hasLoop && notes.length > 0}
-    <div class="note-grid">
-      {#each visualGrid as row, rowIdx}
-        {#each row as hasNote, colIdx}
-          <div class="note-dot" class:active={hasNote}></div>
+    <svg class="staff-view" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <!-- Staff lines -->
+      {#if !isDrums}
+        {#each [20, 35, 50, 65, 80] as lineY}
+          <line x1="0" y1={lineY} x2="100" y2={lineY} class="staff-line" />
         {/each}
+      {:else}
+        <!-- Simplified lines for drums -->
+        {#each [30, 50, 70] as lineY}
+          <line x1="0" y1={lineY} x2="100" y2={lineY} class="staff-line drum-line" />
+        {/each}
+      {/if}
+      <!-- Notes -->
+      {#each staffNotes as note}
+        <ellipse
+          cx={note.x}
+          cy={note.y}
+          rx="4"
+          ry="3"
+          class="note-head"
+          class:accidental={note.isAccidental}
+        />
       {/each}
-    </div>
+    </svg>
   {:else if hasLoop}
     <span class="indicator"></span>
   {/if}
@@ -218,32 +261,45 @@
     background: #fbbf24;
   }
 
-  .note-grid {
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    grid-template-rows: repeat(4, 1fr);
-    gap: 2px;
-    width: 70%;
-    height: 70%;
+  .staff-view {
+    width: 80%;
+    height: 80%;
     z-index: 1;
     pointer-events: none;
   }
 
-  .note-dot {
-    border-radius: 1px;
-    background: rgba(255, 255, 255, 0.15);
+  .staff-line {
+    stroke: rgba(255, 255, 255, 0.25);
+    stroke-width: 0.5;
   }
 
-  .note-dot.active {
-    background: rgba(255, 255, 255, 0.7);
+  .staff-line.drum-line {
+    stroke: rgba(255, 255, 255, 0.15);
+    stroke-dasharray: 2 2;
   }
 
-  .cell.active .note-dot.active {
-    background: #4ade80;
+  .note-head {
+    fill: rgba(255, 255, 255, 0.8);
   }
 
-  .cell.queued .note-dot.active {
-    background: #fbbf24;
+  .note-head.accidental {
+    fill: rgba(255, 200, 100, 0.8);
+  }
+
+  .cell.active .note-head {
+    fill: #4ade80;
+  }
+
+  .cell.active .note-head.accidental {
+    fill: #86efac;
+  }
+
+  .cell.queued .note-head {
+    fill: #fbbf24;
+  }
+
+  .cell.queued .note-head.accidental {
+    fill: #fcd34d;
   }
 
   @keyframes blink {

@@ -5,6 +5,6 @@
 * genres have pre-set BPM, they should prefer specific keys and scales
 * add a function to play each column once
 * are we actually stopping right away when we click a new column / cell as default behavior? feels like we're waiting
-* cello icon looks weird
+* cello icon looks weird even after we tried to fix it once before (use lorc's viola)
 * the genre picker needs to be more obvious
 * gaps in notes for sampled instruments means our loops may not be really working
