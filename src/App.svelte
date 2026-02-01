@@ -4,11 +4,14 @@
   import LoopGrid from './components/LoopGrid.svelte';
   import PadGrid from './components/PadGrid.svelte';
   import SaveLoadModal from './components/SaveLoadModal.svelte';
-  import { playback, project, playMode } from './lib/stores';
+  import LoadingOverlay from './components/LoadingOverlay.svelte';
+  import { playback, project, playMode, genre, loadingStore } from './lib/stores';
   import { transport, initAudio } from './lib/audio';
   import { saveProject } from './lib/storage';
+  import { preloadInstrumentsSequential, getGenreInstruments, type SampledInstrumentType } from './lib/audio/instruments/samplers';
 
   let loopGrid: LoopGrid;
+  let header: Header;
   let saveLoadOpen = false;
 
   function handleKeydown(e: KeyboardEvent) {
@@ -49,17 +52,50 @@
     loopGrid?.stopAll();
   }
 
+  async function preloadGenreInstruments(genrePreset: string): Promise<void> {
+    const instruments = getGenreInstruments(genrePreset);
+    if (instruments.length === 0) return;
+
+    loadingStore.startLoading('Loading instruments...', instruments);
+
+    await preloadInstrumentsSequential(
+      instruments,
+      (loaded, total, current) => {
+        loadingStore.instrumentLoaded(current);
+      }
+    );
+
+    loadingStore.finishLoading();
+  }
+
+  async function handleGenreChange(event: CustomEvent<{ genre: string }>) {
+    const newGenre = event.detail.genre;
+
+    // Preload instruments for new genre first
+    await preloadGenreInstruments(newGenre);
+
+    // Then apply the genre change
+    header?.applyGenreChange(newGenre as any);
+  }
+
   onMount(() => {
     window.addEventListener('keydown', handleKeydown);
+
+    // Preload instruments for current genre on startup
+    const currentGenre = project.getSnapshot().genre || 'lofi-hiphop';
+    preloadGenreInstruments(currentGenre);
+
     return () => window.removeEventListener('keydown', handleKeydown);
   });
 </script>
 
 <main>
   <Header
+    bind:this={header}
     on:regenerateAll={() => loopGrid?.stopAll()}
     on:openSaveLoad={() => saveLoadOpen = true}
     on:stopAll={() => loopGrid?.stopAll()}
+    on:genreChange={handleGenreChange}
   />
   <div class="content">
     {#if $playMode === 'pad'}
@@ -75,6 +111,8 @@
   onClose={() => saveLoadOpen = false}
   onLoad={() => loopGrid?.stopAll()}
 />
+
+<LoadingOverlay />
 
 <style>
   :global(body) {

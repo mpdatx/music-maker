@@ -10,6 +10,8 @@
   const dispatch = createEventDispatcher<{
     regenerateAll: void;
     stopAll: void;
+    genreChange: { genre: GenrePreset };
+    openSaveLoad: void;
   }>();
 
   let volume = $state(80);
@@ -32,10 +34,16 @@
   const scales: ScaleType[] = ['major', 'minor', 'dorian', 'mixolydian', 'pentatonic', 'chromatic'];
   const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
-  function handleGenreChange(newGenre: GenrePreset) {
+  async function handleGenreChange(newGenre: GenrePreset) {
     showGenreSelector = false;
     if (newGenre === $genre) return;
 
+    // Emit event to let App.svelte preload instruments first
+    dispatch('genreChange', { genre: newGenre });
+  }
+
+  // Called by App.svelte after preloading is complete
+  export function applyGenreChange(newGenre: GenrePreset) {
     const config = GENRE_PRESETS[newGenre];
     const newBpm = getGenreBpm(newGenre);
 
@@ -225,6 +233,9 @@
     </button>
     <button class="action-btn" onclick={handleRegenerateAll} title="Regenerate all loops">
       🎲
+    </button>
+    <button onclick={() => dispatch('openSaveLoad')} title="Save/Load projects">
+      💾
     </button>
   </div>
 </header>

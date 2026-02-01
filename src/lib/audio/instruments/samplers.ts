@@ -280,20 +280,76 @@ export function isSamplerLoading(type: SampledInstrumentType): boolean {
   return loadingPromises.has(type);
 }
 
-// Preload multiple instruments in parallel
-export async function preloadInstruments(types: SampledInstrumentType[]): Promise<void> {
-  const promises = types.map(type => {
-    if (samplerCache.has(type) || loadingPromises.has(type)) {
-      // Already loaded or loading
-      return loadingPromises.get(type) ?? Promise.resolve(samplerCache.get(type)!);
-    }
-    return createSampledInstrument(type).catch(err => {
+// Callback for when an instrument finishes loading
+let onInstrumentLoadedCallback: ((type: SampledInstrumentType) => void) | null = null;
+
+export function setOnInstrumentLoaded(callback: ((type: SampledInstrumentType) => void) | null): void {
+  onInstrumentLoadedCallback = callback;
+}
+
+// Preload multiple instruments in parallel with progress callback
+export async function preloadInstruments(
+  types: SampledInstrumentType[],
+  onProgress?: (loaded: number, total: number, current: SampledInstrumentType) => void
+): Promise<void> {
+  // Filter to only instruments that need loading
+  const toLoad = types.filter(type => !samplerCache.has(type));
+
+  if (toLoad.length === 0) {
+    return;
+  }
+
+  let loaded = 0;
+  const total = toLoad.length;
+
+  const promises = toLoad.map(async type => {
+    try {
+      // Check if already loading
+      if (loadingPromises.has(type)) {
+        await loadingPromises.get(type);
+      } else {
+        await createSampledInstrument(type);
+      }
+      loaded++;
+      onProgress?.(loaded, total, type);
+      onInstrumentLoadedCallback?.(type);
+    } catch (err) {
       console.warn(`Failed to preload ${type}:`, err);
-      return null;
-    });
+      loaded++;
+      onProgress?.(loaded, total, type);
+    }
   });
 
   await Promise.all(promises);
+}
+
+// Preload instruments sequentially (better for progress reporting)
+export async function preloadInstrumentsSequential(
+  types: SampledInstrumentType[],
+  onProgress?: (loaded: number, total: number, current: SampledInstrumentType) => void
+): Promise<void> {
+  const toLoad = types.filter(type => !samplerCache.has(type));
+
+  if (toLoad.length === 0) {
+    return;
+  }
+
+  const total = toLoad.length;
+
+  for (let i = 0; i < toLoad.length; i++) {
+    const type = toLoad[i];
+    try {
+      if (loadingPromises.has(type)) {
+        await loadingPromises.get(type);
+      } else {
+        await createSampledInstrument(type);
+      }
+      onInstrumentLoadedCallback?.(type);
+    } catch (err) {
+      console.warn(`Failed to preload ${type}:`, err);
+    }
+    onProgress?.(i + 1, total, type);
+  }
 }
 
 // Get instruments used by a genre (for preloading)
