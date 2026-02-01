@@ -223,10 +223,10 @@
           oninput={handleVolumeChange}
           title="Volume: {Math.round(track.volume * 100)}%"
         />
-        <div class="level-meter">
-          <div class="level-fill" style="width: {level * 100}%"></div>
+        <div class="level-meter-vertical">
+          <div class="level-fill-vertical" style="height: {level * 100}%"></div>
+          <span class="level-db-vertical">{levelDb > -Infinity ? levelDb.toFixed(0) : '-∞'}</span>
         </div>
-        <span class="level-db">{levelDb > -Infinity ? levelDb.toFixed(0) : '-∞'}</span>
       </div>
     </div>
   </div>
@@ -425,27 +425,36 @@
     background: #aaa;
   }
 
-  .level-meter {
-    width: 40px;
-    height: 6px;
+  .level-meter-vertical {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 20px;
+    height: 48px;
     background: #222;
     border-radius: 3px;
     overflow: hidden;
     margin-left: 0.25rem;
+    position: relative;
   }
 
-  .level-fill {
-    height: 100%;
-    background: linear-gradient(to right, #4ade80, #fbbf24, #ef4444);
-    transition: width 0.05s ease-out;
+  .level-fill-vertical {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, #4ade80, #fbbf24, #ef4444);
+    transition: height 0.05s ease-out;
   }
 
-  .level-db {
-    font-size: 0.6rem;
-    color: #666;
-    min-width: 28px;
-    text-align: right;
+  .level-db-vertical {
+    position: absolute;
+    bottom: 2px;
+    font-size: 0.5rem;
+    color: #fff;
+    text-shadow: 0 0 2px #000;
     font-family: monospace;
+    z-index: 1;
   }
 
   .cells {
