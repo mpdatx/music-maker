@@ -14,6 +14,7 @@
   }>();
 
   let volume = $state(80);
+  let showGenreSelector = $state(false);
 
   function handleVolumeChange(e: Event) {
     volume = parseInt((e.target as HTMLInputElement).value);
@@ -33,6 +34,7 @@
   const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
   function handleGenreChange(newGenre: GenrePreset) {
+    showGenreSelector = false;
     if (newGenre === $genre) return;
 
     const config = GENRE_PRESETS[newGenre];
@@ -135,14 +137,29 @@
 
   <div class="center">
     <div class="music-settings">
-      <label>
-        Genre:
-        <select value={$genre} onchange={(e) => handleGenreChange(e.target.value as GenrePreset)}>
-          {#each genres as g}
-            <option value={g}>{GENRE_PRESETS[g].name}</option>
-          {/each}
-        </select>
-      </label>
+      <div class="genre-picker">
+        <button
+          class="genre-button"
+          onclick={() => showGenreSelector = !showGenreSelector}
+        >
+          <span class="genre-label">Genre</span>
+          <span class="genre-name">{GENRE_PRESETS[$genre].name}</span>
+        </button>
+
+        {#if showGenreSelector}
+          <div class="genre-selector">
+            {#each genres as g}
+              <button
+                class="genre-option"
+                class:selected={g === $genre}
+                onclick={() => handleGenreChange(g)}
+              >
+                {GENRE_PRESETS[g].name}
+              </button>
+            {/each}
+          </div>
+        {/if}
+      </div>
 
       <label>
         Key:
@@ -366,6 +383,82 @@
   }
 
   .mode-toggle button.active {
+    background: #7c3aed;
+    color: #fff;
+  }
+
+  .genre-picker {
+    position: relative;
+    display: inline-block;
+  }
+
+  .genre-button {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.5rem 1rem;
+    background: #2a2a4e;
+    border: 1px solid #444;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    color: #fff;
+  }
+
+  .genre-button:hover {
+    background: #3a3a5e;
+  }
+
+  .genre-label {
+    font-size: 0.65rem;
+    opacity: 0.6;
+    margin-bottom: 0.15rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .genre-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .genre-selector {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 160px;
+    margin-top: 0.25rem;
+    background: #2a2a4e;
+    border: 1px solid #444;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    z-index: 100;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .genre-option {
+    display: block;
+    width: 100%;
+    padding: 0.5rem 1rem;
+    background: none;
+    border: none;
+    border-bottom: 1px solid #333;
+    cursor: pointer;
+    text-align: left;
+    color: #ccc;
+    font-size: 0.85rem;
+  }
+
+  .genre-option:last-child {
+    border-bottom: none;
+  }
+
+  .genre-option:hover {
+    background: #3a3a5e;
+    color: #fff;
+  }
+
+  .genre-option.selected {
     background: #7c3aed;
     color: #fff;
   }
