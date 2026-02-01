@@ -283,7 +283,7 @@
   }
 
   .track-header {
-    width: 220px;
+    width: 280px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
@@ -346,6 +346,7 @@
     display: flex;
     align-items: center;
     gap: 0.25rem;
+    flex-shrink: 0;
   }
 
   .mute-btn, .solo-btn, .keys-btn {
