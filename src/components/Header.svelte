@@ -134,19 +134,16 @@
   </div>
 
   <div class="center">
-    <div class="genre-picker">
-      {#each genres as g}
-        <button
-          class="genre-btn"
-          class:active={$genre === g}
-          onclick={() => handleGenreChange(g)}
-        >
-          {GENRE_PRESETS[g].name}
-        </button>
-      {/each}
-    </div>
-
     <div class="music-settings">
+      <label>
+        Genre:
+        <select value={$genre} onchange={(e) => handleGenreChange(e.target.value as GenrePreset)}>
+          {#each genres as g}
+            <option value={g}>{GENRE_PRESETS[g].name}</option>
+          {/each}
+        </select>
+      </label>
+
       <label>
         Key:
       <select value={$musicalKey} onchange={handleKeyChange}>
@@ -220,40 +217,6 @@
     display: flex;
     gap: 1rem;
     align-items: center;
-    flex-direction: column;
-  }
-
-  .genre-picker {
-    display: flex;
-    gap: 0.25rem;
-    background: #1a1a2e;
-    padding: 3px;
-    border-radius: 8px;
-    border: 1px solid #333;
-  }
-
-  .genre-btn {
-    background: transparent;
-    border: none;
-    color: #888;
-    padding: 0.4rem 0.75rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.8rem;
-    font-weight: 500;
-    transition: all 0.15s ease;
-    white-space: nowrap;
-  }
-
-  .genre-btn:hover {
-    color: #ccc;
-    background: rgba(124, 58, 237, 0.2);
-  }
-
-  .genre-btn.active {
-    background: linear-gradient(135deg, #7c3aed, #9333ea);
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.4);
   }
 
   .music-settings {
