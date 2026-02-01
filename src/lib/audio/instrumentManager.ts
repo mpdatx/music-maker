@@ -5,6 +5,7 @@ import { createMelodicSynth, type MelodicSynth } from './instruments/melodic';
 import {
   createSampledInstrument,
   isSampledInstrument,
+  isSamplerLoaded,
   type SampledInstrumentType as SamplerType,
 } from './instruments/samplers';
 
@@ -46,29 +47,42 @@ class InstrumentManager {
       synth = createDrumKit(useGenre);
       connectDrumKit(synth as DrumKit, channel);
     } else if (isSampledInstrument(type)) {
-      // For sampled instruments, create a placeholder and load async
-      synth = new Tone.PolySynth(Tone.Synth).connect(channel); // Placeholder
-      loading = true;
-
-      // Load the sampler async (mapping to library name handled internally)
-      createSampledInstrument(type as SamplerType).then((sampler) => {
-        const instrument = this.instruments.get(trackId);
-        if (instrument && instrument.type === type) {
-          // Dispose placeholder and replace with sampler
-          (instrument.synth as MelodicSynth).dispose();
+      // For sampled instruments, check if already preloaded
+      if (isSamplerLoaded(type as SamplerType)) {
+        // Sampler is already loaded, use it directly
+        createSampledInstrument(type as SamplerType).then((sampler) => {
           sampler.connect(channel);
-          instrument.synth = sampler;
-          instrument.loading = false;
-          this.onInstrumentLoaded?.(trackId, type);
-        }
-      }).catch((err) => {
-        console.error(`Failed to load sampler for ${type}:`, err);
-        // Keep the placeholder synth as fallback
-        const instrument = this.instruments.get(trackId);
-        if (instrument) {
-          instrument.loading = false;
-        }
-      });
+          const instrument = this.instruments.get(trackId);
+          if (instrument) {
+            instrument.synth = sampler;
+          }
+        });
+        // Use a placeholder initially (will be replaced immediately)
+        synth = new Tone.PolySynth(Tone.Synth).connect(channel);
+        loading = false; // Not really loading since it's cached
+      } else {
+        // Sampler not preloaded - create placeholder and load async
+        synth = new Tone.PolySynth(Tone.Synth).connect(channel);
+        loading = true;
+
+        createSampledInstrument(type as SamplerType).then((sampler) => {
+          const instrument = this.instruments.get(trackId);
+          if (instrument && instrument.type === type) {
+            // Dispose placeholder and replace with sampler
+            (instrument.synth as MelodicSynth).dispose();
+            sampler.connect(channel);
+            instrument.synth = sampler;
+            instrument.loading = false;
+            this.onInstrumentLoaded?.(trackId, type);
+          }
+        }).catch((err) => {
+          console.error(`Failed to load sampler for ${type}:`, err);
+          const instrument = this.instruments.get(trackId);
+          if (instrument) {
+            instrument.loading = false;
+          }
+        });
+      }
     } else {
       synth = createMelodicSynth(type as SynthInstrumentType, useGenre);
       (synth as MelodicSynth).connect(channel);
@@ -84,6 +98,46 @@ class InstrumentManager {
 
   isInstrumentLoading(trackId: string): boolean {
     return this.instruments.get(trackId)?.loading ?? false;
+  }
+
+  // Wait for an instrument to finish loading (resolves immediately if already loaded)
+  async waitForInstrument(trackId: string): Promise<void> {
+    const instrument = this.instruments.get(trackId);
+    if (!instrument || !instrument.loading) {
+      return;
+    }
+
+    // Poll until loading is complete
+    return new Promise((resolve) => {
+      const check = () => {
+        const inst = this.instruments.get(trackId);
+        if (!inst || !inst.loading) {
+          resolve();
+        } else {
+          setTimeout(check, 50);
+        }
+      };
+      check();
+    });
+  }
+
+  // Check if any instruments are currently loading
+  isAnyInstrumentLoading(): boolean {
+    for (const instrument of this.instruments.values()) {
+      if (instrument.loading) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Wait for all instruments to finish loading
+  async waitForAllInstruments(): Promise<void> {
+    const loadingTracks = Array.from(this.instruments.entries())
+      .filter(([_, inst]) => inst.loading)
+      .map(([id]) => id);
+
+    await Promise.all(loadingTracks.map(id => this.waitForInstrument(id)));
   }
 
   getTrackInstrument(trackId: string): TrackInstrument | undefined {
