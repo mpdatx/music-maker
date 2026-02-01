@@ -8,3 +8,4 @@ export * from './groove';
 export * from './pipeline';
 export { getDrumTemplates, getDrumTemplatesByEnergy } from './templates/drums';
 export { getBassTemplates, getBassTemplatesByEnergy } from './templates/bass';
+export { getFillTemplates, getFillTemplatesByEnergy, generateFill } from './templates/fills';

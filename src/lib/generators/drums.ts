@@ -1,6 +1,6 @@
 import type { Note, GenerationParams, ChordDegree, LoopBundle, LoopVariation, DrumFillPoints, GenrePreset } from '../types';
 import { SeededRandom } from './theory';
-import { processRhythm } from './rhythm';
+import { processRhythm, generateFill } from './rhythm';
 
 interface DrumPattern {
   kick: number[];
@@ -80,36 +80,6 @@ export function generateDrumPattern(params: GenerationParams, seed: number, bars
   return notes;
 }
 
-// Fill patterns for drum fills at chord boundaries
-const FILL_PATTERNS: Note[][] = [
-  // Snare fill - 16th notes building up
-  [
-    { pitch: 'snare', time: '0:0:3', duration: '16n', velocity: 0.6 },
-    { pitch: 'snare', time: '0:0:3.25', duration: '16n', velocity: 0.65 },
-    { pitch: 'snare', time: '0:0:3.5', duration: '16n', velocity: 0.7 },
-    { pitch: 'snare', time: '0:0:3.75', duration: '16n', velocity: 0.8 },
-  ],
-  // Tom fill - descending
-  [
-    { pitch: 'tom', time: '0:0:3', duration: '16n', velocity: 0.7 },
-    { pitch: 'tom', time: '0:0:3.25', duration: '16n', velocity: 0.7 },
-    { pitch: 'snare', time: '0:0:3.5', duration: '16n', velocity: 0.75 },
-    { pitch: 'kick', time: '0:0:3.75', duration: '16n', velocity: 0.85 },
-  ],
-  // Kick-snare combo
-  [
-    { pitch: 'kick', time: '0:0:3', duration: '16n', velocity: 0.8 },
-    { pitch: 'snare', time: '0:0:3.25', duration: '16n', velocity: 0.7 },
-    { pitch: 'kick', time: '0:0:3.5', duration: '16n', velocity: 0.8 },
-    { pitch: 'snare', time: '0:0:3.75', duration: '16n', velocity: 0.85 },
-  ],
-  // Simple crash
-  [
-    { pitch: 'snare', time: '0:0:3.5', duration: '8n', velocity: 0.75 },
-    { pitch: 'openhat', time: '0:0:3.75', duration: '8n', velocity: 0.9 },
-  ],
-];
-
 /**
  * Generate a LoopBundle for drums with fill support
  * Drums don't change with chord progressions, but they add fills at chord boundaries
@@ -118,7 +88,8 @@ export function generateDrumBundle(
   params: GenerationParams,
   progression: ChordDegree[],
   seed: number,
-  bars = 2
+  bars = 2,
+  genre: GenrePreset = 'pop'
 ): LoopBundle {
   const rng = new SeededRandom(seed);
 
@@ -142,8 +113,25 @@ export function generateDrumBundle(
     }
   }
 
-  // Pick fill patterns for each position
-  const fillPatterns: Note[][] = fillPositions.map(() => rng.pick(FILL_PATTERNS));
+  // Add extra fills based on complexity
+  if (params.complexity > 0.6 && progression.length >= 6) {
+    const quarterIndex = Math.floor(progression.length / 4) - 1;
+    const threeQuarterIndex = Math.floor(progression.length * 3 / 4) - 1;
+    if (!fillPositions.includes(quarterIndex) && quarterIndex >= 0) {
+      fillPositions.push(quarterIndex);
+    }
+    if (!fillPositions.includes(threeQuarterIndex)) {
+      fillPositions.push(threeQuarterIndex);
+    }
+  }
+
+  // Generate genre-specific fill patterns for each position
+  // Each fill goes at the end of the bar (last beat of the variation before the chord change)
+  const fillPatterns: Note[][] = fillPositions.map((_, i) => {
+    // Fill goes in the last bar of the current chord's variation
+    // The bar offset is bars-1 (0-indexed last bar of the variation)
+    return generateFill(genre, params.density, seed + i * 100, bars - 1);
+  });
 
   const drumFills: DrumFillPoints = {
     basePattern: baseNotes,

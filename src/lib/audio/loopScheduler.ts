@@ -1,5 +1,5 @@
 import * as Tone from 'tone';
-import type { Loop, Note, InstrumentType, LoopBundle } from '../types';
+import type { Loop, Note, InstrumentType, LoopBundle, DrumFillPoints } from '../types';
 import { instrumentManager } from './instrumentManager';
 import type { DrumKit } from './instruments/drums';
 import type { MelodicSynth } from './instruments/melodic';
@@ -171,8 +171,65 @@ class LoopScheduler {
       parts.push(part);
     }
 
+    // Schedule drum fills if present
+    if (bundle.drumFills && bundle.drumFills.fillPositions.length > 0) {
+      const fillParts = this.scheduleDrumFills(bundle.drumFills, barsPerChord, totalBars, instrument);
+      parts.push(...fillParts);
+    }
+
     const key = this.getLoopKey(trackId);
     this.scheduledBundles.set(key, { trackId, bundle, parts, clock });
+  }
+
+  private scheduleDrumFills(
+    fills: DrumFillPoints,
+    barsPerChord: number,
+    totalBars: number,
+    instrument: { type: InstrumentType; synth: InstrumentSynth }
+  ): Tone.Part[] {
+    const parts: Tone.Part[] = [];
+
+    for (let i = 0; i < fills.fillPositions.length; i++) {
+      const chordIndex = fills.fillPositions[i];
+      const fillPattern = fills.fillPatterns[i];
+
+      if (!fillPattern || fillPattern.length === 0) continue;
+
+      // Calculate the bar where this fill should play
+      // Fills play at the end of the chord's bars (before transitioning to next chord)
+      const startBar = chordIndex * barsPerChord;
+
+      // Adjust fill note times to be relative to the start bar
+      // Fill notes are already positioned within their bar (e.g., "1:0:3" for last bar)
+      const events = fillPattern.map(note => {
+        // Parse the note time to get bar offset within the variation
+        const timeParts = note.time.split(':').map(Number);
+        const barOffset = timeParts[0] || 0;
+        const beat = timeParts[1] || 0;
+        const sixteenth = timeParts[2] || 0;
+
+        // Calculate absolute bar position
+        const absoluteBar = startBar + barOffset;
+
+        return {
+          time: `${absoluteBar}:${beat}:${sixteenth}`,
+          pitch: note.pitch,
+          duration: note.duration,
+          velocity: note.velocity,
+        };
+      });
+
+      const part = new Tone.Part((time, event) => {
+        this.triggerNote(instrument, event, time);
+      }, events);
+
+      part.loop = true;
+      part.loopEnd = `${totalBars}m`;
+      part.start(0);
+      parts.push(part);
+    }
+
+    return parts;
   }
 
   stopLoop(trackId: string): void {

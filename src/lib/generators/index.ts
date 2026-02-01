@@ -203,7 +203,7 @@ export function generateLoopBundle(
     // Drum instruments
     case 'drums':
     case 'percussion':
-      bundle = generateDrumBundle(params, chords, seed, bars);
+      bundle = generateDrumBundle(params, chords, seed, bars, genre);
       break;
 
     // Bass instruments
