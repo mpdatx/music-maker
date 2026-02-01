@@ -392,14 +392,16 @@
   }
 
   .volume-slider {
-    width: 50px;
+    width: 48px;
     height: 4px;
     -webkit-appearance: none;
     appearance: none;
     background: #444;
     border-radius: 2px;
     cursor: pointer;
-    margin-left: 0.25rem;
+    transform: rotate(-90deg);
+    transform-origin: center center;
+    margin: 0 -18px;
   }
 
   .volume-slider::-webkit-slider-thumb {

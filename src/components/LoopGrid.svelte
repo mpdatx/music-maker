@@ -543,7 +543,7 @@
   }
 
   .header-spacer {
-    width: 160px;
+    width: 280px;
     flex-shrink: 0;
   }
 
