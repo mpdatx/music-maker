@@ -35,7 +35,9 @@ class InstrumentManager {
 
     const useGenre = genre ?? this.currentGenre;
     const meter = new Tone.Meter({ smoothing: 0.8 });
-    const channel = new Tone.Channel().connect(this.master).connect(meter);
+    // Chain: channel → meter → master (so meter sees post-volume signal)
+    const channel = new Tone.Channel().connect(meter);
+    meter.connect(this.master);
 
     let synth: InstrumentSynth;
     let loading = false;
