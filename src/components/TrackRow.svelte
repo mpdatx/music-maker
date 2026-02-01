@@ -278,7 +278,7 @@
   }
 
   .track-header {
-    width: 160px;
+    width: 220px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
@@ -339,6 +339,7 @@
 
   .track-controls {
     display: flex;
+    align-items: center;
     gap: 0.25rem;
   }
 
