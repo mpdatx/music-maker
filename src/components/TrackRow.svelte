@@ -223,9 +223,10 @@
           oninput={handleVolumeChange}
           title="Volume: {Math.round(track.volume * 100)}%"
         />
-        <div class="level-meter" title="Level: {levelDb.toFixed(1)}dB">
+        <div class="level-meter">
           <div class="level-fill" style="width: {level * 100}%"></div>
         </div>
+        <span class="level-db">{levelDb > -Infinity ? levelDb.toFixed(0) : '-∞'}</span>
       </div>
     </div>
   </div>
@@ -437,6 +438,14 @@
     height: 100%;
     background: linear-gradient(to right, #4ade80, #fbbf24, #ef4444);
     transition: width 0.05s ease-out;
+  }
+
+  .level-db {
+    font-size: 0.6rem;
+    color: #666;
+    min-width: 28px;
+    text-align: right;
+    font-family: monospace;
   }
 
   .cells {
