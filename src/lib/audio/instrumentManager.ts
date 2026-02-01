@@ -14,6 +14,7 @@ interface TrackInstrument {
   type: InstrumentType;
   synth: InstrumentSynth;
   channel: Tone.Channel;
+  meter: Tone.Meter;
   loading?: boolean;
 }
 
@@ -33,7 +34,8 @@ class InstrumentManager {
     this.disposeTrackInstrument(trackId);
 
     const useGenre = genre ?? this.currentGenre;
-    const channel = new Tone.Channel().connect(this.master);
+    const meter = new Tone.Meter({ smoothing: 0.8 });
+    const channel = new Tone.Channel().connect(this.master).connect(meter);
 
     let synth: InstrumentSynth;
     let loading = false;
@@ -70,7 +72,7 @@ class InstrumentManager {
       (synth as MelodicSynth).connect(channel);
     }
 
-    const instrument: TrackInstrument = { type, synth, channel, loading };
+    const instrument: TrackInstrument = { type, synth, channel, meter, loading };
     this.instruments.set(trackId, instrument);
     return instrument;
   }
@@ -111,6 +113,17 @@ class InstrumentManager {
     this.master.volume.value = Tone.gainToDb(volume);
   }
 
+  getTrackLevel(trackId: string): number {
+    const instrument = this.instruments.get(trackId);
+    if (instrument) {
+      const level = instrument.meter.getValue();
+      // Convert dB to 0-1 range (roughly -60dB to 0dB)
+      const db = typeof level === 'number' ? level : level[0];
+      return Math.max(0, Math.min(1, (db + 60) / 60));
+    }
+    return 0;
+  }
+
   disposeTrackInstrument(trackId: string): void {
     const instrument = this.instruments.get(trackId);
     if (instrument) {
@@ -122,6 +135,7 @@ class InstrumentManager {
         (instrument.synth as MelodicSynth).dispose();
       }
       instrument.channel.dispose();
+      instrument.meter.dispose();
       this.instruments.delete(trackId);
     }
   }

@@ -13,6 +13,7 @@
     allCellStates,
     allCellProgress,
     loops,
+    level = 0,
     onNotePress,
     onNoteRelease
   }: {
@@ -20,6 +21,7 @@
     allCellStates: Record<string, LoopState>;
     allCellProgress: Record<string, number>;
     loops: Record<string, any>;
+    level?: number;
     onNotePress?: (trackId: string, note: string) => void;
     onNoteRelease?: (trackId: string, note: string) => void;
   } = $props();
@@ -219,6 +221,9 @@
           oninput={handleVolumeChange}
           title="Volume: {Math.round(track.volume * 100)}%"
         />
+        <div class="level-meter" title="Level: {Math.round(level * 100)}%">
+          <div class="level-fill" style="width: {level * 100}%"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -414,6 +419,21 @@
 
   .volume-slider::-moz-range-thumb:hover {
     background: #aaa;
+  }
+
+  .level-meter {
+    width: 40px;
+    height: 6px;
+    background: #222;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-left: 0.25rem;
+  }
+
+  .level-fill {
+    height: 100%;
+    background: linear-gradient(to right, #4ade80, #fbbf24, #ef4444);
+    transition: width 0.05s ease-out;
   }
 
   .cells {
