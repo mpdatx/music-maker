@@ -5,7 +5,6 @@ import { createMelodicSynth, type MelodicSynth } from './instruments/melodic';
 import {
   createSampledInstrument,
   isSampledInstrument,
-  isSamplerLoaded,
   type SampledInstrumentType as SamplerType,
 } from './instruments/samplers';
 
@@ -47,42 +46,28 @@ class InstrumentManager {
       synth = createDrumKit(useGenre);
       connectDrumKit(synth as DrumKit, channel);
     } else if (isSampledInstrument(type)) {
-      // For sampled instruments, check if already preloaded
-      if (isSamplerLoaded(type as SamplerType)) {
-        // Sampler is already loaded, use it directly
-        createSampledInstrument(type as SamplerType).then((sampler) => {
-          sampler.connect(channel);
-          const instrument = this.instruments.get(trackId);
-          if (instrument) {
-            instrument.synth = sampler;
-          }
-        });
-        // Use a placeholder initially (will be replaced immediately)
-        synth = new Tone.PolySynth(Tone.Synth).connect(channel);
-        loading = false; // Not really loading since it's cached
-      } else {
-        // Sampler not preloaded - create placeholder and load async
-        synth = new Tone.PolySynth(Tone.Synth).connect(channel);
-        loading = true;
+      // For sampled instruments, create placeholder and load async
+      // Each track gets its own sampler instance
+      synth = new Tone.PolySynth(Tone.Synth).connect(channel);
+      loading = true;
 
-        createSampledInstrument(type as SamplerType).then((sampler) => {
-          const instrument = this.instruments.get(trackId);
-          if (instrument && instrument.type === type) {
-            // Dispose placeholder and replace with sampler
-            (instrument.synth as MelodicSynth).dispose();
-            sampler.connect(channel);
-            instrument.synth = sampler;
-            instrument.loading = false;
-            this.onInstrumentLoaded?.(trackId, type);
-          }
-        }).catch((err) => {
-          console.error(`Failed to load sampler for ${type}:`, err);
-          const instrument = this.instruments.get(trackId);
-          if (instrument) {
-            instrument.loading = false;
-          }
-        });
-      }
+      createSampledInstrument(type as SamplerType).then((sampler) => {
+        const instrument = this.instruments.get(trackId);
+        if (instrument && instrument.type === type) {
+          // Dispose placeholder and replace with sampler
+          (instrument.synth as MelodicSynth).dispose();
+          sampler.connect(channel);
+          instrument.synth = sampler;
+          instrument.loading = false;
+          this.onInstrumentLoaded?.(trackId, type);
+        }
+      }).catch((err) => {
+        console.error(`Failed to load sampler for ${type}:`, err);
+        const instrument = this.instruments.get(trackId);
+        if (instrument) {
+          instrument.loading = false;
+        }
+      });
     } else {
       synth = createMelodicSynth(type as SynthInstrumentType, useGenre);
       (synth as MelodicSynth).connect(channel);

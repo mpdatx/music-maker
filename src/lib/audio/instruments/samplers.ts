@@ -222,7 +222,8 @@ export function getSampledInstrumentTypes(): SampledInstrumentType[] {
 // Samples are typically normalized, so -12 dB provides good headroom
 const SAMPLER_VOLUME_DB = -12;
 
-export async function createSampledInstrument(type: SampledInstrumentType): Promise<Tone.Sampler> {
+// Internal: create or get cached sampler (used for preloading)
+async function getOrCreateCachedSampler(type: SampledInstrumentType): Promise<Tone.Sampler> {
   // Return cached sampler if available
   const cached = samplerCache.get(type);
   if (cached) {
@@ -264,6 +265,27 @@ export async function createSampledInstrument(type: SampledInstrumentType): Prom
   return loadPromise;
 }
 
+// Create a new Sampler for track use (each track gets its own instance)
+export async function createSampledInstrument(type: SampledInstrumentType): Promise<Tone.Sampler> {
+  const libraryName = toLibraryName(type);
+  const samples = INSTRUMENT_SAMPLES[libraryName];
+  const baseUrl = `${SAMPLE_BASE_URL}${libraryName}/`;
+
+  return new Promise<Tone.Sampler>((resolve, reject) => {
+    const sampler = new Tone.Sampler({
+      urls: samples,
+      baseUrl,
+      onload: () => {
+        sampler.volume.value = SAMPLER_VOLUME_DB;
+        resolve(sampler);
+      },
+      onerror: (err) => {
+        reject(err);
+      },
+    });
+  });
+}
+
 export function disposeSampledInstrument(type: SampledInstrumentType): void {
   const sampler = samplerCache.get(type);
   if (sampler) {
@@ -294,6 +316,7 @@ export function setOnInstrumentLoaded(callback: ((type: SampledInstrumentType) =
 }
 
 // Preload multiple instruments in parallel with progress callback
+// This warms up the browser's audio cache so subsequent createSampledInstrument calls are faster
 export async function preloadInstruments(
   types: SampledInstrumentType[],
   onProgress?: (loaded: number, total: number, current: SampledInstrumentType) => void
@@ -310,12 +333,8 @@ export async function preloadInstruments(
 
   const promises = toLoad.map(async type => {
     try {
-      // Check if already loading
-      if (loadingPromises.has(type)) {
-        await loadingPromises.get(type);
-      } else {
-        await createSampledInstrument(type);
-      }
+      // Use cached version for preloading
+      await getOrCreateCachedSampler(type);
       loaded++;
       onProgress?.(loaded, total, type);
       onInstrumentLoadedCallback?.(type);
@@ -345,11 +364,8 @@ export async function preloadInstrumentsSequential(
   for (let i = 0; i < toLoad.length; i++) {
     const type = toLoad[i];
     try {
-      if (loadingPromises.has(type)) {
-        await loadingPromises.get(type);
-      } else {
-        await createSampledInstrument(type);
-      }
+      // Use cached version for preloading
+      await getOrCreateCachedSampler(type);
       onInstrumentLoadedCallback?.(type);
     } catch (err) {
       console.warn(`Failed to preload ${type}:`, err);
