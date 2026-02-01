@@ -15,6 +15,8 @@
     loops,
     level = 0,
     levelDb = -Infinity,
+    peak = 0,
+    peakDb = -Infinity,
     onNotePress,
     onNoteRelease
   }: {
@@ -24,6 +26,8 @@
     loops: Record<string, any>;
     level?: number;
     levelDb?: number;
+    peak?: number;
+    peakDb?: number;
     onNotePress?: (trackId: string, note: string) => void;
     onNoteRelease?: (trackId: string, note: string) => void;
   } = $props();
@@ -225,7 +229,8 @@
         />
         <div class="level-meter-vertical">
           <div class="level-fill-vertical" style="height: {level * 100}%"></div>
-          <span class="level-db-vertical">{levelDb > -Infinity ? levelDb.toFixed(0) : '-∞'}</span>
+          <div class="peak-indicator" style="bottom: {peak * 100}%"></div>
+          <span class="level-db-vertical">{peakDb > -60 ? peakDb.toFixed(0) : '-∞'}</span>
         </div>
       </div>
     </div>
@@ -445,6 +450,15 @@
     right: 0;
     background: linear-gradient(to top, #4ade80, #fbbf24, #ef4444);
     transition: height 0.05s ease-out;
+  }
+
+  .peak-indicator {
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    height: 2px;
+    background: #fff;
+    transition: bottom 0.05s ease-out;
   }
 
   .level-db-vertical {

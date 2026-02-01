@@ -19,12 +19,17 @@
   // Level meters for each track (0-1)
   let trackLevels: Record<string, number> = {};
   let trackLevelsDb: Record<string, number> = {};
+  // Peak hold levels (decay slowly)
+  let trackPeaks: Record<string, number> = {};
+  let trackPeaksDb: Record<string, number> = {};
   let animationFrame: number | null = null;
 
   function updateProgress() {
     const newProgress: Record<string, number> = {};
     const newLevels: Record<string, number> = {};
     const newLevelsDb: Record<string, number> = {};
+    const newPeaks: Record<string, number> = { ...trackPeaks };
+    const newPeaksDb: Record<string, number> = { ...trackPeaksDb };
 
     for (const [key, state] of Object.entries(cellStates)) {
       if (state === 'active') {
@@ -33,15 +38,31 @@
       }
     }
 
-    // Update track levels
+    // Update track levels and peaks
     for (const track of $tracks) {
-      newLevels[track.id] = instrumentManager.getTrackLevel(track.id);
-      newLevelsDb[track.id] = instrumentManager.getTrackLevelDb(track.id);
+      const level = instrumentManager.getTrackLevel(track.id);
+      const db = instrumentManager.getTrackLevelDb(track.id);
+      newLevels[track.id] = level;
+      newLevelsDb[track.id] = db;
+
+      // Update peak if current level is higher, otherwise decay
+      const currentPeak = newPeaks[track.id] ?? 0;
+      const currentPeakDb = newPeaksDb[track.id] ?? -Infinity;
+      if (level >= currentPeak) {
+        newPeaks[track.id] = level;
+        newPeaksDb[track.id] = db;
+      } else {
+        // Decay peak slowly (about 1.5 seconds to fall from 1 to 0 at 60fps)
+        newPeaks[track.id] = Math.max(0, currentPeak - 0.012);
+        newPeaksDb[track.id] = currentPeakDb - 0.5;
+      }
     }
 
     cellProgress = newProgress;
     trackLevels = newLevels;
     trackLevelsDb = newLevelsDb;
+    trackPeaks = newPeaks;
+    trackPeaksDb = newPeaksDb;
     animationFrame = requestAnimationFrame(updateProgress);
   }
 
@@ -475,6 +496,8 @@
       loops={$loops}
       level={trackLevels[track.id] ?? 0}
       levelDb={trackLevelsDb[track.id] ?? -Infinity}
+      peak={trackPeaks[track.id] ?? 0}
+      peakDb={trackPeaksDb[track.id] ?? -Infinity}
       onNotePress={handleNotePress}
       onNoteRelease={handleNoteRelease}
       on:cellTap={handleCellTap}
