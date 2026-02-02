@@ -8,7 +8,7 @@ function generateId(): string {
 }
 
 // Re-export for backwards compatibility - tracks are now in src/lib/genres.ts
-import { GENRES } from '../genres';
+import { GENRES, getGenreConfig } from '../genres';
 export const GENRE_TRACKS = Object.fromEntries(
   Object.entries(GENRES).map(([key, val]) => [key, val.tracks])
 ) as Record<GenrePreset, Array<{ type: InstrumentType; name: string }>>;
@@ -130,17 +130,22 @@ function createProjectStore() {
       updatedAt: Date.now(),
     })),
 
-    setTrackCounterMelody: (trackId: string, enabled: boolean, technique?: CounterMelodyTechnique) => update(p => ({
-      ...p,
-      tracks: p.tracks.map(t => t.id === trackId ? {
-        ...t,
-        counterMelody: {
-          enabled,
-          technique: technique ?? t.counterMelody?.technique ?? 'rhythmic',
-        },
-      } : t),
-      updatedAt: Date.now(),
-    })),
+    setTrackCounterMelody: (trackId: string, enabled: boolean, technique?: CounterMelodyTechnique) => update(p => {
+      const genreConfig = getGenreConfig(p.genre);
+      const defaultTechnique = genreConfig?.defaultCounterTechnique ?? 'rhythmic';
+
+      return {
+        ...p,
+        tracks: p.tracks.map(t => t.id === trackId ? {
+          ...t,
+          counterMelody: {
+            enabled,
+            technique: technique ?? t.counterMelody?.technique ?? defaultTechnique,
+          },
+        } : t),
+        updatedAt: Date.now(),
+      };
+    }),
 
     setTrackCounterTechnique: (trackId: string, technique: CounterMelodyTechnique) => update(p => ({
       ...p,

@@ -1,4 +1,4 @@
-import type { GenerationParams, ScaleType } from './types';
+import type { GenerationParams, ScaleType, CounterMelodyTechnique } from './types';
 
 /**
  * Consolidated genre configuration.
@@ -12,6 +12,7 @@ export const GENRES = {
     scale: 'minor' as ScaleType,
     swing: 0.3,
     defaultParams: { density: 0.4, complexity: 0.3, swing: 0.3, style: 'swung' } as GenerationParams,
+    defaultCounterTechnique: 'rhythmic' as CounterMelodyTechnique,
     tracks: [
       { type: 'drums', name: 'Drums' },
       { type: 'piano', name: 'Piano' },
@@ -29,6 +30,7 @@ export const GENRES = {
     scale: 'minor' as ScaleType,
     swing: 0,
     defaultParams: { density: 0.7, complexity: 0.5, swing: 0, style: 'straight' } as GenerationParams,
+    defaultCounterTechnique: 'rhythmic' as CounterMelodyTechnique,
     tracks: [
       { type: 'drums', name: 'Drums' },
       { type: 'percussion', name: 'Percussion' },
@@ -46,6 +48,7 @@ export const GENRES = {
     scale: 'minor' as ScaleType,
     swing: 0,
     defaultParams: { density: 0.5, complexity: 0.4, swing: 0, style: 'straight' } as GenerationParams,
+    defaultCounterTechnique: 'rhythmic' as CounterMelodyTechnique,
     tracks: [
       { type: 'drums', name: 'Drums' },
       { type: 'bass-electric', name: 'Bass' },
@@ -62,6 +65,7 @@ export const GENRES = {
     scale: 'major' as ScaleType,
     swing: 0.1,
     defaultParams: { density: 0.2, complexity: 0.2, swing: 0.1, style: 'straight' } as GenerationParams,
+    defaultCounterTechnique: 'rhythmic' as CounterMelodyTechnique,
     tracks: [
       { type: 'drums', name: 'Drums' },
       { type: 'piano', name: 'Piano' },
@@ -79,6 +83,7 @@ export const GENRES = {
     scale: 'mixolydian' as ScaleType,
     swing: 0.4,
     defaultParams: { density: 0.6, complexity: 0.6, swing: 0.4, style: 'syncopated' } as GenerationParams,
+    defaultCounterTechnique: 'rhythmic' as CounterMelodyTechnique,
     tracks: [
       { type: 'drums', name: 'Drums' },
       { type: 'percussion', name: 'Percussion' },
@@ -96,6 +101,7 @@ export const GENRES = {
     scale: 'major' as ScaleType,
     swing: 0,
     defaultParams: { density: 0.5, complexity: 0.3, swing: 0, style: 'straight' } as GenerationParams,
+    defaultCounterTechnique: 'rhythmic' as CounterMelodyTechnique,
     tracks: [
       { type: 'drums', name: 'Drums' },
       { type: 'bass-electric', name: 'Bass' },
@@ -113,6 +119,7 @@ export const GENRES = {
     scale: 'dorian' as ScaleType,
     swing: 0.5,
     defaultParams: { density: 0.5, complexity: 0.7, swing: 0.5, style: 'swung' } as GenerationParams,
+    defaultCounterTechnique: 'harmonic' as CounterMelodyTechnique,
     tracks: [
       { type: 'drums', name: 'Drums' },
       { type: 'bass-electric', name: 'Bass' },
@@ -128,6 +135,7 @@ export const GENRES = {
     scale: 'major' as ScaleType,
     swing: 0,
     defaultParams: { density: 0.4, complexity: 0.5, swing: 0, style: 'straight' } as GenerationParams,
+    defaultCounterTechnique: 'contrary' as CounterMelodyTechnique,
     tracks: [
       { type: 'violin', name: 'Violin' },
       { type: 'cello', name: 'Cello' },
@@ -144,6 +152,7 @@ export const GENRES = {
     scale: 'major' as ScaleType,
     swing: 0.3,
     defaultParams: { density: 0.4, complexity: 0.5, swing: 0.3, style: 'swung' } as GenerationParams,
+    defaultCounterTechnique: 'rhythmic' as CounterMelodyTechnique,
     tracks: [
       { type: 'drums', name: 'Drums' },
       { type: 'percussion', name: 'Percussion' },
@@ -160,6 +169,7 @@ export const GENRES = {
     scale: 'minor' as ScaleType,
     swing: 0.4,
     defaultParams: { density: 0.4, complexity: 0.4, swing: 0.4, style: 'swung' } as GenerationParams,
+    defaultCounterTechnique: 'rhythmic' as CounterMelodyTechnique,
     tracks: [
       { type: 'drums', name: 'Drums' },
       { type: 'bass-electric', name: 'Bass' },
@@ -176,6 +186,7 @@ export const GENRES = {
     scale: 'major' as ScaleType,
     swing: 0.2,
     defaultParams: { density: 0.4, complexity: 0.3, swing: 0.2, style: 'offbeat' } as GenerationParams,
+    defaultCounterTechnique: 'rhythmic' as CounterMelodyTechnique,
     tracks: [
       { type: 'drums', name: 'Drums' },
       { type: 'percussion', name: 'Percussion' },
@@ -192,6 +203,7 @@ export const GENRES = {
     scale: 'minor' as ScaleType,
     swing: 0,
     defaultParams: { density: 0.3, complexity: 0.4, swing: 0, style: 'straight' } as GenerationParams,
+    defaultCounterTechnique: 'rhythmic' as CounterMelodyTechnique,
     tracks: [
       { type: 'percussion', name: 'Percussion' },
       { type: 'violin', name: 'Violin' },
@@ -215,6 +227,7 @@ export interface GenreConfig {
   scale: ScaleType;
   swing: number;
   defaultParams: GenerationParams;
+  defaultCounterTechnique: CounterMelodyTechnique;
   tracks: Array<{ type: string; name: string }>;
 }
 
