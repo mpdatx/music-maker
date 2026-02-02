@@ -1,6 +1,12 @@
-import type { Note, GenerationParams, ChordDegree, LoopBundle, LoopVariation, GenrePreset } from '../types';
+import type { Note, GenerationParams, ChordDegree, LoopBundle, LoopVariation, GenrePreset, CounterMelodyConfig } from '../types';
 import { SeededRandom, getNoteInScale, getChordTonesForDegree, resolveChordDegree, positionToTime } from './theory';
 import { getRhythmSteps, getGrooveProfile, applyGroove } from './rhythm';
+import { generateCounterMelody } from './counterMelody';
+
+export interface MelodyOutput {
+  main: Note[];
+  counter: Note[] | null;
+}
 
 type Contour = 'ascending' | 'descending' | 'arch' | 'flat';
 
@@ -142,4 +148,40 @@ export function generateLeadBundle(
     generationParams: params,
     variations,
   };
+}
+
+/**
+ * Generate lead melody with optional counter melody.
+ * Returns both the main melody and the counter melody (if enabled).
+ */
+export function generateLeadWithCounter(
+  params: GenerationParams,
+  key: string,
+  scale: string,
+  seed: number,
+  bars: number = 2,
+  genre: GenrePreset = 'pop',
+  counterConfig?: CounterMelodyConfig
+): MelodyOutput {
+  // Generate main melody using existing generateLeadBundle
+  const bundle = generateLeadBundle(params, key, scale, ['I'], seed, bars, genre);
+  const main = bundle.variations[0].notes;
+
+  if (!counterConfig?.enabled) {
+    return { main, counter: null };
+  }
+
+  // Get chord tones for I chord
+  const chordTones = getChordTonesForDegree('I', key, scale, 5);
+
+  const counter = generateCounterMelody(
+    main,
+    counterConfig.technique,
+    chordTones,
+    key,
+    scale,
+    seed
+  );
+
+  return { main, counter };
 }
