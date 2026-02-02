@@ -16,6 +16,12 @@
 
   let volume = $state(80);
   let showGenreSelector = $state(false);
+  let bpmInput = $state($bpm.toString());
+
+  // Sync bpmInput when store changes externally
+  $effect(() => {
+    bpmInput = $bpm.toString();
+  });
 
   function handleVolumeChange(e: Event) {
     volume = parseInt((e.target as HTMLInputElement).value);
@@ -82,8 +88,17 @@
 
   function handleBpmChange(e: Event) {
     const value = parseInt((e.target as HTMLInputElement).value);
-    project.setBpm(value);
-    transport.setBpm(value);
+    if (!isNaN(value) && value >= 40 && value <= 240) {
+      project.setBpm(value);
+      transport.setBpm(value);
+    }
+  }
+
+  function handleBpmBlur() {
+    const value = parseInt(bpmInput);
+    if (isNaN(value) || value < 40 || value > 240) {
+      bpmInput = $bpm.toString();
+    }
   }
 
   function handleKeyChange(e: Event) {
@@ -203,17 +218,17 @@
 
     <ProgressionDisplay />
 
-    <label>
-        BPM:
+    <div class="bpm-control">
         <input
-          type="range"
-          min="60"
-          max="180"
-          value={$bpm}
-          oninput={handleBpmChange}
+          type="text"
+          inputmode="numeric"
+          class="bpm-input"
+          bind:value={bpmInput}
+          onchange={handleBpmChange}
+          onblur={handleBpmBlur}
         />
-        <span>{$bpm}</span>
-      </label>
+        <span class="bpm-label">BPM</span>
+      </div>
     </div>
   </div>
 
@@ -434,6 +449,35 @@
     background: #8b5cf6;
     border-color: #8b5cf6;
     color: #fff;
+  }
+
+  .bpm-control {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .bpm-input {
+    width: 50px;
+    height: 32px;
+    background: #2a2a4e;
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bpm-input:focus {
+    outline: none;
+    border-color: #7c3aed;
+  }
+
+  .bpm-label {
+    font-size: 0.75rem;
+    color: #888;
   }
 
   .mode-toggle {
