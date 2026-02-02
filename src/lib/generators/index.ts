@@ -18,6 +18,11 @@ export { getDefaultProgression, getProgressionById, getProgressionsForGenre } fr
 export { GENRES, getGenreConfig, getGenreTracks, getAllGenres } from '../genres';
 export type { GenrePreset } from '../genres';
 
+// Counter-melody exports
+export { generateCounterMelody } from './counterMelody';
+export { generateLeadWithCounter, type MelodyOutput } from './lead';
+export { generateChordsWithCounter } from './chords';
+
 // MIDI note ranges for sampled instruments (based on available samples)
 export const SAMPLED_INSTRUMENT_RANGES: Record<string, [number, number]> = {
   'piano': [33, 108],           // A1 to C8
