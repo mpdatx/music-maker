@@ -50,4 +50,35 @@ describe('generateCounterMelody', () => {
       expect(c1).toEqual(c2);
     });
   });
+
+  describe('harmonic technique', () => {
+    it('generates notes at same times as main melody', () => {
+      const mainNotes: Note[] = [
+        { pitch: 'C5', time: '0:0:0', duration: '4n', velocity: 0.8 },
+        { pitch: 'E5', time: '0:1:0', duration: '4n', velocity: 0.8 },
+      ];
+      const counter = generateCounterMelody(mainNotes, 'harmonic', chordTones, 'C', 'major', 12345);
+      expect(counter.length).toBe(mainNotes.length);
+      expect(counter[0].time).toBe('0:0:0');
+      expect(counter[1].time).toBe('0:1:0');
+    });
+
+    it('plays different chord tones than main melody (no unisons)', () => {
+      const mainNotes: Note[] = [
+        { pitch: 'C5', time: '0:0:0', duration: '4n', velocity: 0.8 },
+      ];
+      const counter = generateCounterMelody(mainNotes, 'harmonic', chordTones, 'C', 'major', 12345);
+      const mainPitchClass = 'C';
+      const counterPitchClass = counter[0].pitch.replace(/\d+/, '');
+      expect(counterPitchClass).not.toBe(mainPitchClass);
+    });
+
+    it('uses octave 4 (one below main)', () => {
+      const mainNotes: Note[] = [
+        { pitch: 'C5', time: '0:0:0', duration: '4n', velocity: 0.8 },
+      ];
+      const counter = generateCounterMelody(mainNotes, 'harmonic', chordTones, 'C', 'major', 12345);
+      expect(counter[0].pitch).toMatch(/4$/);
+    });
+  });
 });

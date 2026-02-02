@@ -156,6 +156,77 @@ function generateRhythmicCounter(
 }
 
 /**
+ * Extract pitch class (note name without octave) from a pitch string
+ */
+function getPitchClass(pitch: string): string {
+  return pitch.replace(/\d+/, '');
+}
+
+/**
+ * Generate counter melody using harmonic technique (complementary chord tones)
+ */
+function generateHarmonicCounter(
+  mainNotes: Note[],
+  chordTones: string[],
+  rng: SeededRandom
+): Note[] {
+  if (chordTones.length === 0 || mainNotes.length === 0) {
+    return [];
+  }
+
+  // Extract pitch classes from chord tones
+  const chordPitchClasses = chordTones.map(getPitchClass);
+
+  const counterNotes: Note[] = [];
+
+  for (const mainNote of mainNotes) {
+    const mainPitchClass = getPitchClass(mainNote.pitch);
+
+    // Find which chord tone index the main note is playing
+    const mainIndex = chordPitchClasses.indexOf(mainPitchClass);
+
+    // Choose complementary chord tone
+    let counterPitchClass: string;
+    if (mainIndex === 0) {
+      // Main plays root -> counter plays third
+      counterPitchClass = chordPitchClasses[1] || chordPitchClasses[0];
+    } else if (mainIndex === 1) {
+      // Main plays third -> counter plays fifth
+      counterPitchClass = chordPitchClasses[2] || chordPitchClasses[0];
+    } else if (mainIndex === 2) {
+      // Main plays fifth -> counter plays root
+      counterPitchClass = chordPitchClasses[0];
+    } else {
+      // Main note not in chord tones - pick a different one randomly
+      const otherTones = chordPitchClasses.filter(pc => pc !== mainPitchClass);
+      counterPitchClass = otherTones.length > 0 ? rng.pick(otherTones) : chordPitchClasses[0];
+    }
+
+    // Ensure no unisons - if somehow we'd play the same pitch class, shift
+    if (counterPitchClass === mainPitchClass && chordPitchClasses.length > 1) {
+      const alternatives = chordPitchClasses.filter(pc => pc !== mainPitchClass);
+      counterPitchClass = rng.pick(alternatives);
+    }
+
+    // Use octave 4 (one below main melody's octave 5)
+    const counterPitch = `${counterPitchClass}4`;
+
+    // Calculate velocity
+    const baseVelocity = mainNote.velocity;
+    const velocity = Math.max(MIN_VELOCITY, baseVelocity * VELOCITY_MULTIPLIER);
+
+    counterNotes.push({
+      pitch: counterPitch,
+      time: mainNote.time,
+      duration: mainNote.duration,
+      velocity,
+    });
+  }
+
+  return counterNotes;
+}
+
+/**
  * Generate a counter melody based on the main melody
  */
 export function generateCounterMelody(
@@ -172,8 +243,7 @@ export function generateCounterMelody(
     case 'rhythmic':
       return generateRhythmicCounter(mainNotes, chordTones, rng);
     case 'harmonic':
-      // Placeholder - will be implemented in Task 3
-      return [];
+      return generateHarmonicCounter(mainNotes, chordTones, rng);
     case 'contrary':
       // Placeholder - will be implemented in Task 4
       return [];
