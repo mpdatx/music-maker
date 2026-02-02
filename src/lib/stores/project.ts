@@ -1,5 +1,5 @@
 import { writable, derived, get } from 'svelte/store';
-import type { Project, Track, Loop, InstrumentType } from '../types';
+import type { Project, Track, Loop, InstrumentType, CounterMelodyTechnique } from '../types';
 import { generateLoop, GENRE_PRESETS, getGenreTracks } from '../generators';
 import type { GenrePreset } from '../genres';
 
@@ -127,6 +127,30 @@ function createProjectStore() {
     setTrackSolo: (trackId: string, solo: boolean) => update(p => ({
       ...p,
       tracks: p.tracks.map(t => t.id === trackId ? { ...t, solo } : t),
+      updatedAt: Date.now(),
+    })),
+
+    setTrackCounterMelody: (trackId: string, enabled: boolean, technique?: CounterMelodyTechnique) => update(p => ({
+      ...p,
+      tracks: p.tracks.map(t => t.id === trackId ? {
+        ...t,
+        counterMelody: {
+          enabled,
+          technique: technique ?? t.counterMelody?.technique ?? 'rhythmic',
+        },
+      } : t),
+      updatedAt: Date.now(),
+    })),
+
+    setTrackCounterTechnique: (trackId: string, technique: CounterMelodyTechnique) => update(p => ({
+      ...p,
+      tracks: p.tracks.map(t => t.id === trackId ? {
+        ...t,
+        counterMelody: {
+          enabled: t.counterMelody?.enabled ?? false,
+          technique,
+        },
+      } : t),
       updatedAt: Date.now(),
     })),
 
