@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { playback, isPlaying, bpm } from '../lib/stores';
+  import { playback, isPlaying, bpm, project } from '../lib/stores';
   import { transport, initAudio, setMasterVolume } from '../lib/audio';
 
   const dispatch = createEventDispatcher<{
@@ -8,6 +8,12 @@
   }>();
 
   let volume = 80; // 0-100 scale
+  let bpmInput = $state($bpm.toString());
+
+  // Sync bpmInput when store changes externally
+  $effect(() => {
+    bpmInput = $bpm.toString();
+  });
 
   async function handlePlayPause() {
     await initAudio();
@@ -27,6 +33,22 @@
     // Convert 0-100 to decibels (-60 to 0)
     const db = volume === 0 ? -Infinity : (volume / 100) * 60 - 60;
     setMasterVolume(db);
+  }
+
+  function handleBpmChange(e: Event) {
+    const value = parseInt((e.target as HTMLInputElement).value);
+    if (!isNaN(value) && value >= 40 && value <= 240) {
+      project.setBpm(value);
+      transport.setBpm(value);
+    }
+  }
+
+  function handleBpmBlur() {
+    // Reset to valid value if invalid
+    const value = parseInt(bpmInput);
+    if (isNaN(value) || value < 40 || value > 240) {
+      bpmInput = $bpm.toString();
+    }
   }
 </script>
 
@@ -55,8 +77,16 @@
     <span class="icon">⏹</span>
   </button>
 
-  <div class="bpm-display">
-    {$bpm} BPM
+  <div class="bpm-control">
+    <input
+      type="text"
+      inputmode="numeric"
+      class="bpm-input"
+      bind:value={bpmInput}
+      onchange={handleBpmChange}
+      onblur={handleBpmBlur}
+    />
+    <span class="bpm-label">BPM</span>
   </div>
 </div>
 
@@ -106,12 +136,35 @@
     border-color: #f87171;
   }
 
-  .bpm-display {
+  .bpm-control {
     position: absolute;
     right: 1rem;
-    font-size: 0.875rem;
-    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .bpm-input {
+    width: 50px;
+    height: 44px;
+    background: #2a2a4e;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 500;
+    text-align: center;
     font-variant-numeric: tabular-nums;
+  }
+
+  .bpm-input:focus {
+    outline: none;
+    border-color: #4ade80;
+  }
+
+  .bpm-label {
+    font-size: 0.75rem;
+    color: #888;
   }
 
   .volume-control {
