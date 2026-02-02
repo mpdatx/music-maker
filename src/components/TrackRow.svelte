@@ -189,10 +189,10 @@
 
 <div class="track-row" class:muted={track.muted}>
   <div class="track-header">
-    <span class="track-icon" style="color: {INSTRUMENT_COLORS[track.type] ?? '#888'}">
-      {@html getInstrumentIcon(track.type)}
-    </span>
-    <div class="track-label">
+    <div class="track-icon-label">
+      <span class="track-icon" style="color: {INSTRUMENT_COLORS[track.type] ?? '#888'}">
+        {@html getInstrumentIcon(track.type)}
+      </span>
       <div class="track-name-row">
         {#if isSampled}
           <span class="sampled-badge" title="Sampled instrument" style="color: {INSTRUMENT_COLORS[track.type] ?? '#888'}">
@@ -203,7 +203,8 @@
         {/if}
         <span class="track-name">{track.name}</span>
       </div>
-      <div class="track-controls">
+    </div>
+    <div class="track-controls">
         <button
           class="mute-btn"
           class:active={track.muted}
@@ -280,7 +281,6 @@
           <span class="level-db-vertical">{peakDb > -60 ? peakDb.toFixed(0) : '-∞'}</span>
         </div>
       </div>
-    </div>
   </div>
 
   <div class="cells">
@@ -345,9 +345,18 @@
     gap: 0.5rem;
   }
 
+  .track-icon-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.125rem;
+    width: 70px;
+    flex-shrink: 0;
+  }
+
   .track-icon {
-    width: 56px;
-    height: 56px;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -359,23 +368,16 @@
     height: 100%;
   }
 
-  .track-label {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    min-width: 0;
-    flex: 1;
-  }
-
   .track-name-row {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    justify-content: center;
+    gap: 0.125rem;
   }
 
   .sampled-badge {
-    width: 18px;
-    height: 18px;
+    width: 12px;
+    height: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -389,12 +391,14 @@
   }
 
   .track-name {
-    font-size: 0.85rem;
+    font-size: 0.7rem;
     font-weight: 500;
     color: #ccc;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 65px;
+    text-align: center;
   }
 
   .track-controls {
