@@ -17,6 +17,28 @@
     isPlaying?: boolean;
   } = $props();
 
+  // Track loop cycles for continuous scrolling
+  let loopCycle = $state(0);
+  let lastProgress = $state(0);
+
+  // Detect when progress resets (loop repeats) and increment cycle
+  $effect(() => {
+    if (isPlaying && lastProgress > 0.8 && progress < 0.2) {
+      loopCycle++;
+    }
+    lastProgress = progress;
+  });
+
+  // Reset cycle when playback stops
+  $effect(() => {
+    if (!isPlaying) {
+      loopCycle = 0;
+    }
+  });
+
+  // Total progress including cycle count
+  let totalProgress = $derived(isPlaying ? loopCycle + progress : 0);
+
   // Staff visualization constants
   const STAFF_POSITIONS = 12;
 
@@ -125,65 +147,78 @@
     return positions;
   });
 
-  // Scroll position to keep playhead visible
+  // Scroll position to keep playhead visible (continuous scrolling)
   let scrollOffset = $derived.by(() => {
     if (!isPlaying) return 0;
     // Start scrolling when playhead reaches 30% of visible area
     const scrollStart = 0.3;
-    if (progress > scrollStart) {
-      return (progress - scrollStart) * 100;
+    if (totalProgress > scrollStart) {
+      return (totalProgress - scrollStart) * 100;
     }
     return 0;
+  });
+
+  // Calculate which loop cycles are visible (for rendering multiple copies)
+  let visibleCycles = $derived.by(() => {
+    const startCycle = Math.floor(scrollOffset / 100);
+    // Show current cycle plus next one for smooth transition
+    return [startCycle, startCycle + 1, startCycle + 2];
   });
 </script>
 
 <div class="staff-view" style="--color: {instrumentColor}">
   <div class="staff-scroll" style="transform: translateX(-{scrollOffset}%)">
-    <!-- Staff lines -->
-    <svg class="staff-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
-      {#if !isDrums}
-        {#each [20, 35, 50, 65, 80] as lineY}
-          <line x1="0" y1={lineY} x2="100" y2={lineY} class="staff-line" />
-        {/each}
-      {:else}
-        {#each [30, 50, 70] as lineY}
-          <line x1="0" y1={lineY} x2="100" y2={lineY} class="staff-line drum-line" />
-        {/each}
-      {/if}
+    <!-- Render each visible cycle -->
+    {#each visibleCycles as cycle (cycle)}
+      <div class="cycle" style="left: {cycle * 100}%">
+        <!-- Staff lines -->
+        <svg class="staff-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
+          {#if !isDrums}
+            {#each [20, 35, 50, 65, 80] as lineY}
+              <line x1="0" y1={lineY} x2="100" y2={lineY} class="staff-line" />
+            {/each}
+          {:else}
+            {#each [30, 50, 70] as lineY}
+              <line x1="0" y1={lineY} x2="100" y2={lineY} class="staff-line drum-line" />
+            {/each}
+          {/if}
 
-      <!-- Bar lines -->
-      {#each Array(bars + 1) as _, i}
-        <line
-          x1={i * (100 / bars)}
-          y1="10"
-          x2={i * (100 / bars)}
-          y2="90"
-          class="bar-line"
-        />
-      {/each}
-    </svg>
+          <!-- Bar lines -->
+          {#each Array(bars + 1) as _, i}
+            <line
+              x1={i * (100 / bars)}
+              y1="10"
+              x2={i * (100 / bars)}
+              y2="90"
+              class="bar-line"
+            />
+          {/each}
+        </svg>
 
-    <!-- Notes -->
-    <div class="notes-layer">
-      {#each staffNotes as note}
-        <div
-          class="note"
-          class:active={note.isActive}
-          class:accidental={note.isAccidental}
-          style="
-            left: {note.x * 100}%;
-            top: {note.y}%;
-            width: {Math.max(note.width * 100, 2)}%;
-          "
-        >
-          <span class="note-label">{note.pitch}</span>
+        <!-- Notes -->
+        <div class="notes-layer">
+          {#each staffNotes as note}
+            {@const isActiveInThisCycle = cycle === loopCycle && note.isActive}
+            <div
+              class="note"
+              class:active={isActiveInThisCycle}
+              class:accidental={note.isAccidental}
+              style="
+                left: {note.x * 100}%;
+                top: {note.y}%;
+                width: {Math.max(note.width * 100, 2)}%;
+              "
+            >
+              <span class="note-label">{note.pitch}</span>
+            </div>
+          {/each}
         </div>
-      {/each}
-    </div>
+      </div>
+    {/each}
 
     <!-- Playhead -->
     {#if isPlaying}
-      <div class="playhead" style="left: {progress * 100}%"></div>
+      <div class="playhead" style="left: {totalProgress * 100}%"></div>
     {/if}
   </div>
 </div>
@@ -203,9 +238,16 @@
     position: absolute;
     top: 0;
     left: 0;
-    width: 200%;
+    width: 100%;
     height: 100%;
     transition: transform 0.1s linear;
+  }
+
+  .cycle {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 100%;
   }
 
   .staff-lines {
