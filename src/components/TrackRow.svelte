@@ -3,6 +3,7 @@
   import type { Track, LoopState, CounterMelodyTechnique } from '../lib/types';
   import GridCell from './GridCell.svelte';
   import NoteButton from './NoteButton.svelte';
+  import StaffView from './StaffView.svelte';
   import { getInstrumentIcon, isSampledInstrument } from '../lib/icons';
   import { getScaleNotes, noteToMidi } from '../lib/generators/theory';
   import { SAMPLED_INSTRUMENT_RANGES } from '../lib/generators';
@@ -47,6 +48,9 @@
   let showKeys = $state(false);
   let keysFlipped = $state(false);
 
+  // Staff mode toggle
+  let showStaff = $state(false);
+
   function toggleKeysMode() {
     if (showKeys) {
       // Flip out, then hide
@@ -57,6 +61,7 @@
     } else {
       // Show, then flip in
       showKeys = true;
+      showStaff = false; // Turn off staff mode
       // Small delay to ensure DOM is ready
       setTimeout(() => {
         keysFlipped = true;
@@ -185,6 +190,35 @@
     const key = `${track.id}:${col}`;
     return allCellProgress[key] ?? 0;
   }
+
+  function toggleStaffMode() {
+    showStaff = !showStaff;
+    if (showStaff && showKeys) {
+      showKeys = false;
+      keysFlipped = false;
+    }
+  }
+
+  // Get the currently active/playing loop for staff view
+  let activeLoopData = $derived.by(() => {
+    for (const cell of track.cells) {
+      const key = `${track.id}:${cell.col}`;
+      const state = allCellStates[key];
+      if (state === 'active') {
+        const loop = loops[cell.loopId];
+        const progress = allCellProgress[key] ?? 0;
+        return { loop, progress, isPlaying: true };
+      }
+    }
+    // If nothing is playing, show the first loop with content
+    for (const cell of track.cells) {
+      const loop = loops[cell.loopId];
+      if (loop?.notes?.length > 0) {
+        return { loop, progress: 0, isPlaying: false };
+      }
+    }
+    return { loop: null, progress: 0, isPlaying: false };
+  });
 </script>
 
 <div class="track-row" class:muted={track.muted}>
@@ -235,6 +269,16 @@
             title="Toggle keys mode"
           >
             K
+          </button>
+          <button
+            class="staff-btn"
+            class:active={showStaff}
+            onclick={toggleStaffMode}
+            title="Toggle staff view"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/>
+            </svg>
           </button>
         </div>
         {#if supportsCounter}
@@ -308,7 +352,16 @@
   </div>
 
   <div class="cells">
-    {#if showKeys}
+    {#if showStaff}
+      <StaffView
+        notes={activeLoopData.loop?.notes ?? []}
+        bars={activeLoopData.loop?.bars ?? 2}
+        progress={activeLoopData.progress}
+        instrumentType={track.type}
+        instrumentColor={INSTRUMENT_COLORS[track.type] ?? '#3a3a5e'}
+        isPlaying={activeLoopData.isPlaying}
+      />
+    {:else if showKeys}
       {#each scaleNotes as note, i (note)}
         {@const available = isNoteAvailable(note)}
         <NoteButton
@@ -491,6 +544,35 @@
     border-color: #06b6d4;
   }
 
+  .staff-btn {
+    width: 44px;
+    height: 44px;
+    border: 1px solid #444;
+    background: #2a2a4e;
+    color: #888;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+  }
+
+  .staff-btn svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .staff-btn:hover {
+    background: #3a3a5e;
+  }
+
+  .staff-btn.active {
+    background: #8b5cf6;
+    color: #fff;
+    border-color: #8b5cf6;
+  }
+
   .technique-picker {
     display: flex;
   }
@@ -637,5 +719,9 @@
   .cells :global(.cell) {
     flex: 1;
     max-width: 80px;
+  }
+
+  .cells :global(.staff-view) {
+    flex: 1;
   }
 </style>
