@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { project, bpm, musicalKey, scale, tracks, genre, playMode, playback } from '../lib/stores';
+  import { project, bpm, musicalKey, scale, tracks, genre, playMode, playback, globalStaffView } from '../lib/stores';
   import { transport, instrumentManager, setMasterVolume } from '../lib/audio';
   import type { ScaleType } from '../lib/types';
   import { GENRES, GENRE_PRESETS, getGenreBpm, generateLoop, getAllGenres } from '../lib/generators';
@@ -232,6 +232,16 @@
     <button class="stop-btn" onclick={handleStopAll} title="Stop all">
       ⏹
     </button>
+    <button
+      class="staff-btn"
+      class:active={$globalStaffView}
+      onclick={() => globalStaffView.update(v => !v)}
+      title="Toggle all tracks to staff view"
+    >
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/>
+      </svg>
+    </button>
     <button class="action-btn" onclick={handleRegenerateAll} title="Regenerate all loops">
       🎲
     </button>
@@ -394,6 +404,36 @@
   .stop-btn:hover {
     background: #f87171;
     border-color: #f87171;
+  }
+
+  .staff-btn {
+    background: #3a3a5e;
+    border: 1px solid #555;
+    color: #888;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    transition: all 0.15s ease;
+  }
+
+  .staff-btn svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .staff-btn:hover {
+    background: #4a4a6e;
+  }
+
+  .staff-btn.active {
+    background: #8b5cf6;
+    border-color: #8b5cf6;
+    color: #fff;
   }
 
   .mode-toggle {
