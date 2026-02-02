@@ -16,13 +16,16 @@ export const GENRE_TRACKS = Object.fromEntries(
 function createDefaultProject(): Project {
   const colCount = 8;
   const genre: GenrePreset = 'lofi-hiphop';
-  const genreConfig = GENRE_PRESETS[genre];
-  const key = genreConfig.key;
-  const scale = genreConfig.scale;
+  const genreConfig = getGenreConfig(genre);
+  const { key, scale, defaultParams: params, defaultCounterTechnique } = genreConfig;
   const loops: Record<string, Loop> = {};
-  const params = genreConfig.defaultParams;
 
   const trackDefs = GENRE_TRACKS[genre];
+
+  // Melodic instruments that support counter-melody
+  const melodicTypes = new Set(['lead', 'keys', 'piano', 'pad', 'pluck', 'strings',
+    'guitar-acoustic', 'guitar-electric', 'violin', 'cello', 'harp', 'flute',
+    'clarinet', 'saxophone', 'trumpet', 'french-horn', 'organ-sampled']);
 
   const tracks: Track[] = trackDefs.map(({ type, name }) => {
     const trackId = generateId();
@@ -32,6 +35,10 @@ function createDefaultProject(): Project {
       loops[loop.id] = loop;
       return { col, loopId: loop.id };
     });
+
+    // Enable counter-melody on lead track by default, with genre's technique
+    const isMelodic = melodicTypes.has(type);
+    const isLeadTrack = type === 'lead';
 
     return {
       id: trackId,
@@ -43,6 +50,12 @@ function createDefaultProject(): Project {
       solo: false,
       effects: [],
       cells,
+      ...(isMelodic && {
+        counterMelody: {
+          enabled: isLeadTrack,
+          technique: defaultCounterTechnique,
+        },
+      }),
     };
   });
 
@@ -82,11 +95,16 @@ function createProjectStore() {
 
     // Rebuild tracks for a new genre with appropriate instruments, key, and scale
     rebuildTracksForGenre: (genre: GenrePreset) => update(p => {
-      const genreConfig = GENRE_PRESETS[genre];
-      const { key, scale, defaultParams: params } = genreConfig;
+      const genreConfig = getGenreConfig(genre);
+      const { key, scale, defaultParams: params, defaultCounterTechnique } = genreConfig;
       const trackDefs = GENRE_TRACKS[genre];
       const colCount = p.tracks[0]?.cells.length ?? 8;
       const loops: Record<string, Loop> = {};
+
+      // Melodic instruments that support counter-melody
+      const melodicTypes = new Set(['lead', 'keys', 'piano', 'pad', 'pluck', 'strings',
+        'guitar-acoustic', 'guitar-electric', 'violin', 'cello', 'harp', 'flute',
+        'clarinet', 'saxophone', 'trumpet', 'french-horn', 'organ-sampled']);
 
       const tracks: Track[] = trackDefs.map(({ type, name }) => {
         const trackId = generateId();
@@ -95,6 +113,10 @@ function createProjectStore() {
           loops[loop.id] = loop;
           return { col, loopId: loop.id };
         });
+
+        // Enable counter-melody on lead track by default, with genre's technique
+        const isMelodic = melodicTypes.has(type);
+        const isLeadTrack = type === 'lead';
 
         return {
           id: trackId,
@@ -106,6 +128,12 @@ function createProjectStore() {
           solo: false,
           effects: [],
           cells,
+          ...(isMelodic && {
+            counterMelody: {
+              enabled: isLeadTrack,
+              technique: defaultCounterTechnique,
+            },
+          }),
         };
       });
 

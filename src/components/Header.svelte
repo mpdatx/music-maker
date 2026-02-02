@@ -334,28 +334,42 @@
   }
 
   .volume-slider {
-    width: 60px;
-    height: 4px;
+    width: 80px;
+    height: 44px;
     -webkit-appearance: none;
     appearance: none;
-    background: #444;
-    border-radius: 2px;
+    background: transparent;
     cursor: pointer;
+  }
+
+  .volume-slider::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 8px;
+    background: #444;
+    border-radius: 4px;
   }
 
   .volume-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 12px;
-    height: 12px;
+    width: 24px;
+    height: 24px;
     background: #fff;
     border-radius: 50%;
     cursor: pointer;
+    margin-top: -8px;
+  }
+
+  .volume-slider::-moz-range-track {
+    width: 100%;
+    height: 8px;
+    background: #444;
+    border-radius: 4px;
   }
 
   .volume-slider::-moz-range-thumb {
-    width: 12px;
-    height: 12px;
+    width: 24px;
+    height: 24px;
     background: #fff;
     border-radius: 50%;
     cursor: pointer;
@@ -366,14 +380,14 @@
     background: #3a3a5e;
     border: 1px solid #555;
     color: #fff;
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.9rem;
+    font-size: 1.1rem;
     transition: all 0.15s ease;
   }
 
@@ -385,16 +399,17 @@
   .mode-toggle {
     display: flex;
     background: #2a2a4e;
-    border-radius: 6px;
-    padding: 2px;
+    border-radius: 8px;
+    padding: 3px;
   }
 
   .mode-toggle button {
     background: transparent;
     border: none;
     color: #888;
-    padding: 0.4rem;
-    border-radius: 4px;
+    width: 44px;
+    height: 44px;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s ease;
     display: flex;
@@ -413,6 +428,8 @@
 
   .mode-toggle button svg {
     display: block;
+    width: 24px;
+    height: 24px;
   }
 
   .key-scale-stack {

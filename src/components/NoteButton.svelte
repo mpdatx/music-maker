@@ -93,13 +93,8 @@
   onpointerenter={handlePointerEnter}
   oncontextmenu={(e) => e.preventDefault()}
 >
-  <div class="button-inner">
-    <div class="button-front"></div>
-    <div class="button-back">
-      <span class="note-name">{noteDisplay.name}</span>
-      <span class="note-octave">{noteDisplay.octave}</span>
-    </div>
-  </div>
+  <span class="note-name">{noteDisplay.name}</span>
+  <span class="note-octave">{noteDisplay.octave}</span>
 </button>
 
 <style>
@@ -107,73 +102,42 @@
     width: 100%;
     aspect-ratio: 1;
     max-width: 80px;
-    perspective: 200px;
-    background: transparent;
-    border: none;
+    background: var(--button-color);
+    border: 2px solid transparent;
+    border-radius: 8px;
     cursor: pointer;
     padding: 0;
     touch-action: none;
-  }
-
-  .note-button.disabled {
-    cursor: not-allowed;
-    opacity: 0.4;
-  }
-
-  .button-inner {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    transition: transform 0.3s ease;
-    transform-style: preserve-3d;
-  }
-
-  .note-button.flipped .button-inner {
-    transform: rotateY(180deg);
-  }
-
-  .note-button.pressed .button-inner {
-    transform: rotateY(180deg) scale(0.95);
-  }
-
-  .button-front,
-  .button-back {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    backface-visibility: hidden;
-    border-radius: 8px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease, opacity 0.3s ease;
+    opacity: 0;
   }
 
-  .button-front {
-    background: linear-gradient(145deg, #3a3a5e 0%, #2a2a4e 100%);
-    border: 2px solid #4a4a6e;
-    box-shadow:
-      0 4px 6px rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  .note-button.flipped {
+    opacity: 1;
+    border-color: rgba(255, 255, 255, 0.3);
   }
 
-  .button-back {
-    background: linear-gradient(145deg, var(--button-color) 0%, color-mix(in srgb, var(--button-color) 70%, black) 100%);
-    border: 2px solid color-mix(in srgb, var(--button-color) 80%, white);
-    transform: rotateY(180deg);
-    box-shadow:
-      0 4px 6px rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  .note-button:hover {
+    filter: brightness(1.2);
   }
 
-  .note-button.pressed .button-back {
-    box-shadow:
-      0 2px 3px rgba(0, 0, 0, 0.3),
-      inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  .note-button.pressed {
+    border-color: #4ade80;
+    box-shadow: 0 0 12px rgba(74, 222, 128, 0.4);
+    transform: scale(0.95);
+  }
+
+  .note-button.disabled {
+    cursor: not-allowed;
+    opacity: 0.4 !important;
   }
 
   .note-name {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     font-weight: bold;
     color: white;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -181,7 +145,7 @@
   }
 
   .note-octave {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     color: rgba(255, 255, 255, 0.7);
     margin-top: 2px;
   }

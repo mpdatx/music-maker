@@ -1,11 +1,13 @@
 <script lang="ts">
   let {
     note,
+    color = '#3a3a5e',
     isInScale = true,
     onPress,
     onRelease,
   }: {
     note: string;
+    color?: string;
     isInScale?: boolean;
     onPress: () => void;
     onRelease: () => void;
@@ -47,6 +49,7 @@
   class:pressed={isPressed}
   class:in-scale={isInScale}
   class:accidental={note.includes('#')}
+  style="--cell-color: {color}"
   onpointerdown={handlePointerDown}
   onpointerup={handlePointerUp}
   onpointerleave={handlePointerLeave}
@@ -60,52 +63,44 @@
   .pad-cell {
     width: 100%;
     aspect-ratio: 1;
-    border: 1px solid #333;
+    border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: 8px;
-    background: linear-gradient(145deg, #2a2a4e, #1a1a2e);
+    background: var(--cell-color);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.05s, background 0.1s, box-shadow 0.1s;
+    transition: transform 0.05s, border-color 0.15s, box-shadow 0.15s, filter 0.1s;
     user-select: none;
     touch-action: none;
   }
 
   .pad-cell:hover {
-    background: linear-gradient(145deg, #3a3a5e, #2a2a4e);
+    filter: brightness(1.2);
   }
 
   .pad-cell.pressed {
     transform: scale(0.95);
-    background: linear-gradient(145deg, #7c3aed, #5b21b6);
-    box-shadow: 0 0 20px rgba(124, 58, 237, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.1);
-  }
-
-  .pad-cell.in-scale {
-    border-color: #4a4a6e;
+    border-color: #4ade80;
+    box-shadow: 0 0 12px rgba(74, 222, 128, 0.4);
   }
 
   .pad-cell.accidental {
-    background: linear-gradient(145deg, #1f1f35, #15152a);
+    filter: brightness(0.7);
   }
 
   .pad-cell.accidental:hover {
-    background: linear-gradient(145deg, #2a2a45, #1f1f35);
-  }
-
-  .pad-cell.accidental.pressed {
-    background: linear-gradient(145deg, #6d28d9, #4c1d95);
+    filter: brightness(0.85);
   }
 
   .note-label {
-    font-size: 0.7rem;
-    color: #888;
-    font-weight: 500;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 600;
     pointer-events: none;
   }
 
   .pad-cell.pressed .note-label {
-    color: #fff;
+    color: #4ade80;
   }
 </style>

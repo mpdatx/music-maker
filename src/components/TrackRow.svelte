@@ -38,8 +38,8 @@
 
   let isSampled = $derived(isSampledInstrument(track.type));
 
-  // Counter-melody state
-  let supportsCounter = $derived(track.type === 'lead' || track.type === 'keys');
+  // Counter-melody state - all melodic instruments support it (exclude drums/percussion)
+  let supportsCounter = $derived(track.type !== 'drums' && track.type !== 'percussion');
   let counterEnabled = $derived(track.counterMelody?.enabled ?? false);
   let counterTechnique = $derived(track.counterMelody?.technique ?? 'rhythmic');
 
@@ -205,82 +205,106 @@
       </div>
     </div>
     <div class="track-controls">
-        <button
-          class="mute-btn"
-          class:active={track.muted}
-          onclick={() => dispatch('mute', { trackId: track.id })}
-        >
-          M
-        </button>
-        <button
-          class="solo-btn"
-          class:active={track.solo}
-          onclick={() => dispatch('solo', { trackId: track.id })}
-        >
-          S
-        </button>
-        <button
-          class="keys-btn"
-          class:active={showKeys}
-          onclick={toggleKeysMode}
-          title="Toggle keys mode"
-        >
-          K
-        </button>
-        {#if supportsCounter}
+      <div class="button-rows">
+        <div class="button-row">
           <button
-            class="counter-btn"
-            class:active={counterEnabled}
-            onclick={() => onCounterToggle?.(track.id)}
-            title="Toggle counter-melody"
+            class="mute-btn"
+            class:active={track.muted}
+            onclick={() => dispatch('mute', { trackId: track.id })}
+            title="Mute"
           >
-            C
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3 9v6h4l5 5V4L7 9H3z"/>
+              <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+            </svg>
           </button>
-          {#if counterEnabled}
+          <button
+            class="solo-btn"
+            class:active={track.solo}
+            onclick={() => dispatch('solo', { trackId: track.id })}
+            title="Solo"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9z"/>
+            </svg>
+          </button>
+          <button
+            class="keys-btn"
+            class:active={showKeys}
+            onclick={toggleKeysMode}
+            title="Toggle keys mode"
+          >
+            K
+          </button>
+        </div>
+        {#if supportsCounter}
+          <div class="button-row counter-row">
             <div class="technique-picker">
               <button
                 class="technique-btn"
-                class:active={counterTechnique === 'rhythmic'}
-                onclick={() => onCounterTechniqueChange?.(track.id, 'rhythmic')}
-                title="Rhythmic (call-response)"
+                class:active={counterEnabled && counterTechnique === 'rhythmic'}
+                onclick={() => {
+                  if (counterEnabled && counterTechnique === 'rhythmic') {
+                    onCounterToggle?.(track.id);
+                  } else {
+                    if (!counterEnabled) onCounterToggle?.(track.id);
+                    onCounterTechniqueChange?.(track.id, 'rhythmic');
+                  }
+                }}
+                title="Rhythmic counter-melody (click again to disable)"
               >
                 R
               </button>
               <button
                 class="technique-btn"
-                class:active={counterTechnique === 'harmonic'}
-                onclick={() => onCounterTechniqueChange?.(track.id, 'harmonic')}
-                title="Harmonic (chord tones)"
+                class:active={counterEnabled && counterTechnique === 'harmonic'}
+                onclick={() => {
+                  if (counterEnabled && counterTechnique === 'harmonic') {
+                    onCounterToggle?.(track.id);
+                  } else {
+                    if (!counterEnabled) onCounterToggle?.(track.id);
+                    onCounterTechniqueChange?.(track.id, 'harmonic');
+                  }
+                }}
+                title="Harmonic counter-melody (click again to disable)"
               >
                 H
               </button>
               <button
                 class="technique-btn"
-                class:active={counterTechnique === 'contrary'}
-                onclick={() => onCounterTechniqueChange?.(track.id, 'contrary')}
+                class:active={counterEnabled && counterTechnique === 'contrary'}
+                onclick={() => {
+                  if (counterEnabled && counterTechnique === 'contrary') {
+                    onCounterToggle?.(track.id);
+                  } else {
+                    if (!counterEnabled) onCounterToggle?.(track.id);
+                    onCounterTechniqueChange?.(track.id, 'contrary');
+                  }
+                }}
                 title="Contrary motion"
               >
                 M
               </button>
             </div>
-          {/if}
+          </div>
         {/if}
-        <input
-          type="range"
-          class="volume-slider"
-          min="0"
-          max="1"
-          step="0.01"
-          value={track.volume}
-          oninput={handleVolumeChange}
-          title="Volume: {Math.round(track.volume * 100)}%"
-        />
-        <div class="level-meter-vertical">
-          <div class="level-fill-vertical" style="height: {level * 100}%"></div>
-          <div class="peak-indicator" style="bottom: {peak * 100}%"></div>
-          <span class="level-db-vertical">{peakDb > -60 ? peakDb.toFixed(0) : '-∞'}</span>
-        </div>
       </div>
+      <input
+        type="range"
+        class="volume-slider"
+        min="0"
+        max="1"
+        step="0.01"
+        value={track.volume}
+        oninput={handleVolumeChange}
+        title="Volume: {Math.round(track.volume * 100)}%"
+      />
+      <div class="level-meter-vertical">
+        <div class="level-fill-vertical" style="height: {level * 100}%"></div>
+        <div class="peak-indicator" style="bottom: {peak * 100}%"></div>
+        <span class="level-db-vertical">{peakDb > -60 ? peakDb.toFixed(0) : '-∞'}</span>
+      </div>
+    </div>
   </div>
 
   <div class="cells">
@@ -338,11 +362,11 @@
   }
 
   .track-header {
-    width: 280px;
+    width: 420px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
   }
 
   .track-icon-label {
@@ -408,16 +432,41 @@
     flex-shrink: 0;
   }
 
+  .button-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .button-row {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+  }
+
+
   .mute-btn, .solo-btn, .keys-btn {
-    width: 24px;
-    height: 24px;
+    width: 44px;
+    height: 44px;
     border: 1px solid #444;
     background: #2a2a4e;
     color: #888;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 0.75rem;
+    font-size: 1rem;
     font-weight: bold;
+  }
+
+  .mute-btn, .solo-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+  }
+
+  .mute-btn svg, .solo-btn svg {
+    width: 100%;
+    height: 100%;
   }
 
   .mute-btn:hover, .solo-btn:hover, .keys-btn:hover {
@@ -425,40 +474,18 @@
   }
 
   .mute-btn.active {
-    background: #dc2626;
-    color: #fff;
+    background: #2a2a4e;
+    color: #dc2626;
     border-color: #dc2626;
   }
 
   .solo-btn.active {
-    background: #eab308;
-    color: #000;
+    background: #2a2a4e;
+    color: #eab308;
     border-color: #eab308;
   }
 
   .keys-btn.active {
-    background: #06b6d4;
-    color: #fff;
-    border-color: #06b6d4;
-  }
-
-  .counter-btn {
-    width: 24px;
-    height: 24px;
-    border: 1px solid #444;
-    background: #2a2a4e;
-    color: #888;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.75rem;
-    font-weight: bold;
-  }
-
-  .counter-btn:hover {
-    background: #3a3a5e;
-  }
-
-  .counter-btn.active {
     background: #06b6d4;
     color: #fff;
     border-color: #06b6d4;
@@ -469,26 +496,26 @@
   }
 
   .technique-btn {
-    width: 16px;
-    height: 20px;
+    width: 44px;
+    height: 44px;
     border: 1px solid #444;
     border-right: none;
     background: #2a2a4e;
     color: #666;
     border-radius: 0;
     cursor: pointer;
-    font-size: 0.6rem;
+    font-size: 0.9rem;
     font-weight: bold;
     padding: 0;
   }
 
   .technique-btn:first-child {
-    border-radius: 3px 0 0 3px;
+    border-radius: 6px 0 0 6px;
   }
 
   .technique-btn:last-child {
     border-right: 1px solid #444;
-    border-radius: 0 3px 3px 0;
+    border-radius: 0 6px 6px 0;
   }
 
   .technique-btn:hover {
@@ -506,36 +533,50 @@
   }
 
   .volume-slider {
-    width: 48px;
-    height: 4px;
+    width: 80px;
+    height: 44px;
     -webkit-appearance: none;
     appearance: none;
-    background: #444;
-    border-radius: 2px;
+    background: transparent;
     cursor: pointer;
     transform: rotate(-90deg);
     transform-origin: center center;
     margin: 0 -18px;
   }
 
+  .volume-slider::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 8px;
+    background: #444;
+    border-radius: 4px;
+  }
+
   .volume-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 10px;
-    height: 10px;
+    width: 24px;
+    height: 24px;
     background: #888;
     border-radius: 50%;
     cursor: pointer;
     transition: background 0.15s;
+    margin-top: -8px;
   }
 
   .volume-slider::-webkit-slider-thumb:hover {
     background: #aaa;
   }
 
+  .volume-slider::-moz-range-track {
+    width: 100%;
+    height: 8px;
+    background: #444;
+    border-radius: 4px;
+  }
+
   .volume-slider::-moz-range-thumb {
-    width: 10px;
-    height: 10px;
+    width: 24px;
+    height: 24px;
     background: #888;
     border-radius: 50%;
     cursor: pointer;
@@ -550,12 +591,12 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 20px;
-    height: 48px;
+    width: 24px;
+    height: 80px;
     background: #222;
-    border-radius: 3px;
+    border-radius: 4px;
     overflow: hidden;
-    margin-left: 0.25rem;
+    margin-left: 0.5rem;
     position: relative;
   }
 

@@ -590,7 +590,7 @@ const SYNTH_VOLUME_DB: Record<string, number> = {
   bass: -15,      // Bass is loud and sustained
   keys: -12,      // Keys can have multiple voices
   lead: -12,      // Lead is typically monophonic
-  pad: -18,       // Pads stack and sustain, need more headroom
+  pad: -24,       // Pads stack and sustain heavily, need significant headroom
   pluck: -12,     // Pluck is percussive, quick decay
   strings: -18,   // Strings sustain and layer
   organ: -15,     // Organ sustains

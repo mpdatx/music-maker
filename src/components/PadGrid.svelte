@@ -5,6 +5,42 @@
   import type { InstrumentType } from '../lib/types';
   import PadCell from './PadCell.svelte';
 
+  const INSTRUMENT_COLORS: Record<string, string> = {
+    // Synth instruments
+    drums: '#e11d48',
+    percussion: '#db2777',
+    bass: '#7c3aed',
+    keys: '#2563eb',
+    lead: '#0891b2',
+    pad: '#059669',
+    pluck: '#d97706',
+    strings: '#9333ea',
+    organ: '#be185d',
+    choir: '#6366f1',
+    epiano: '#0d9488',
+    kalimba: '#ca8a04',
+    // Sampled instruments
+    piano: '#1e40af',
+    'guitar-acoustic': '#b45309',
+    'guitar-electric': '#dc2626',
+    'bass-electric': '#4c1d95',
+    violin: '#7e22ce',
+    cello: '#6d28d9',
+    contrabass: '#4338ca',
+    harp: '#c2410c',
+    trumpet: '#eab308',
+    trombone: '#f59e0b',
+    'french-horn': '#d97706',
+    tuba: '#92400e',
+    saxophone: '#f97316',
+    flute: '#06b6d4',
+    clarinet: '#0891b2',
+    bassoon: '#0e7490',
+    'organ-sampled': '#a21caf',
+    harmonium: '#c026d3',
+    xylophone: '#16a34a',
+  };
+
   // Grouped instruments for better organization
   const instrumentGroups: { label: string; instruments: Array<Exclude<InstrumentType, 'drums' | 'percussion'>> }[] = [
     {
@@ -49,6 +85,20 @@
   let baseOctave = $derived($padConfig.baseOctave);
   let rows = $derived($padConfig.rows);
   let isLoading = $state(false);
+
+  // Colors for each row (matching grid mode's variety)
+  const ROW_COLORS = [
+    '#0891b2', // cyan
+    '#2563eb', // blue
+    '#7c3aed', // purple
+    '#db2777', // pink
+    '#dc2626', // red
+    '#d97706', // orange
+  ];
+
+  function getRowColor(row: number): string {
+    return ROW_COLORS[row % ROW_COLORS.length];
+  }
 
   // Columns = number of notes in the scale
   let cols = $derived(padPlayer.getScaleLength($scale));
@@ -152,6 +202,7 @@
           {@const note = getNoteForCell(row, col)}
           <PadCell
             {note}
+            color={getRowColor(row)}
             isInScale={true}
             onPress={() => handlePress(row, col)}
             onRelease={() => handleRelease(row, col)}
@@ -171,7 +222,6 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    max-width: 600px;
     margin: 0 auto;
   }
 
@@ -248,11 +298,11 @@
     background: #2a2a4e;
     border: 1px solid #444;
     color: #fff;
-    width: 28px;
-    height: 28px;
-    border-radius: 4px;
+    width: 44px;
+    height: 44px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: 1.25rem;
   }
 
   .octave-control button:hover:not(:disabled) {
@@ -278,12 +328,12 @@
   .octave-labels {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 0.5rem;
     padding: 1rem 0;
   }
 
   .octave-label {
-    flex: 1;
+    height: 80px;
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -296,14 +346,13 @@
 
   .pad-grid {
     display: grid;
-    grid-template-columns: repeat(var(--cols), 1fr);
-    grid-template-rows: repeat(var(--rows), 1fr);
-    gap: 6px;
+    grid-template-columns: repeat(var(--cols), minmax(0, 80px));
+    grid-template-rows: repeat(var(--rows), minmax(0, 80px));
+    gap: 0.5rem;
     padding: 1rem;
     background: #1a1a2e;
     border-radius: 12px;
     border: 1px solid #333;
-    flex: 1;
   }
 
   .pad-footer {

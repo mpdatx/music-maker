@@ -187,14 +187,17 @@
       2 // bars per variation
     );
 
-    // Add counter-melody notes if enabled for this track
-    if (track.counterMelody?.enabled && (track.type === 'lead' || track.type === 'keys')) {
+    // Add counter-melody notes if enabled for this track (all melodic instruments)
+    if (track.counterMelody?.enabled && track.type !== 'drums' && track.type !== 'percussion') {
       const technique = track.counterMelody.technique;
 
       // Process each variation to add counter-melody
       for (const variation of bundle.variations) {
         const chord = progression.chords[variation.chordIndex] ?? 'I';
-        const octave = track.type === 'lead' ? 5 : 4;
+        // Choose octave based on instrument register
+        const highRegister = ['lead', 'violin', 'flute'].includes(track.type);
+        const lowRegister = ['bass', 'bass-electric', 'cello', 'contrabass', 'tuba'].includes(track.type);
+        const octave = highRegister ? 5 : lowRegister ? 3 : 4;
         const chordTones = getChordTonesForDegree(chord, projectData.key, projectData.scale, octave);
 
         const counterNotes = generateCounterMelody(
@@ -632,7 +635,7 @@
   }
 
   .header-spacer {
-    width: 280px;
+    width: 420px;
     flex-shrink: 0;
   }
 
@@ -645,11 +648,11 @@
   .column-play-btn {
     flex: 1;
     max-width: 80px;
-    height: 28px;
+    height: 44px;
     border: 1px solid #444;
     background: #2a2a4e;
     color: #888;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 0.75rem;
     transition: all 0.15s ease;
