@@ -372,6 +372,16 @@
     if (!track) return;
 
     const newSolo = !track.solo;
+
+    // If soloing this track, un-solo all others first
+    if (newSolo) {
+      for (const t of $tracks) {
+        if (t.id !== e.detail.trackId && t.solo) {
+          project.setTrackSolo(t.id, false);
+        }
+      }
+    }
+
     project.setTrackSolo(e.detail.trackId, newSolo);
 
     // Update audio muting based on solo state
