@@ -1,6 +1,14 @@
 import type { GenerationParams, Note } from '../types';
 import { SeededRandom, getScaleNotes, getChordNotes } from './theory';
 
+// Legato duration map - notes extend past their beat to blend into the next
+// This creates overlapping sustains for a smooth, connected sound
+const LEGATO_DURATIONS: Record<string, string> = {
+  '1n': '1n.',    // Whole note extends to dotted whole (1.5x)
+  '2n': '2n.',    // Half note extends to dotted half
+  '4n': '4n.',    // Quarter extends to dotted quarter
+};
+
 export function generateStrings(
   params: GenerationParams,
   key: string,
@@ -30,8 +38,11 @@ export function generateStrings(
       // Pick a chord
       const degreeSet = chordDegrees[Math.floor(random.next() * chordDegrees.length)];
 
-      // Duration based on how many chords per bar
-      const duration = chordsPerBar === 1 ? '1n' : chordsPerBar === 2 ? '2n' : '4n';
+      // Base duration based on how many chords per bar
+      const baseDuration = chordsPerBar === 1 ? '1n' : chordsPerBar === 2 ? '2n' : '4n';
+
+      // Use legato durations for overlapping sustain (notes blend into next chord)
+      const duration = LEGATO_DURATIONS[baseDuration] || baseDuration;
 
       // Add slight humanization to velocity
       const baseVelocity = 0.4 + params.density * 0.2;
