@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { Track, LoopState } from '../lib/types';
+  import type { Track, LoopState, CounterMelodyTechnique } from '../lib/types';
   import GridCell from './GridCell.svelte';
   import NoteButton from './NoteButton.svelte';
   import { getInstrumentIcon, isSampledInstrument } from '../lib/icons';
@@ -18,7 +18,9 @@
     peak = 0,
     peakDb = -Infinity,
     onNotePress,
-    onNoteRelease
+    onNoteRelease,
+    onCounterToggle,
+    onCounterTechniqueChange,
   }: {
     track: Track;
     allCellStates: Record<string, LoopState>;
@@ -30,9 +32,16 @@
     peakDb?: number;
     onNotePress?: (trackId: string, note: string) => void;
     onNoteRelease?: (trackId: string, note: string) => void;
+    onCounterToggle?: (trackId: string) => void;
+    onCounterTechniqueChange?: (trackId: string, technique: CounterMelodyTechnique) => void;
   } = $props();
 
   let isSampled = $derived(isSampledInstrument(track.type));
+
+  // Counter-melody state
+  let supportsCounter = $derived(track.type === 'lead' || track.type === 'keys');
+  let counterEnabled = $derived(track.counterMelody?.enabled ?? false);
+  let counterTechnique = $derived(track.counterMelody?.technique ?? 'rhythmic');
 
   // Per-row keys mode toggle with animation states
   let showKeys = $state(false);
@@ -217,6 +226,44 @@
         >
           K
         </button>
+        {#if supportsCounter}
+          <button
+            class="counter-btn"
+            class:active={counterEnabled}
+            onclick={() => onCounterToggle?.(track.id)}
+            title="Toggle counter-melody"
+          >
+            C
+          </button>
+          {#if counterEnabled}
+            <div class="technique-picker">
+              <button
+                class="technique-btn"
+                class:active={counterTechnique === 'rhythmic'}
+                onclick={() => onCounterTechniqueChange?.(track.id, 'rhythmic')}
+                title="Rhythmic (call-response)"
+              >
+                R
+              </button>
+              <button
+                class="technique-btn"
+                class:active={counterTechnique === 'harmonic'}
+                onclick={() => onCounterTechniqueChange?.(track.id, 'harmonic')}
+                title="Harmonic (chord tones)"
+              >
+                H
+              </button>
+              <button
+                class="technique-btn"
+                class:active={counterTechnique === 'contrary'}
+                onclick={() => onCounterTechniqueChange?.(track.id, 'contrary')}
+                title="Contrary motion"
+              >
+                M
+              </button>
+            </div>
+          {/if}
+        {/if}
         <input
           type="range"
           class="volume-slider"
@@ -389,6 +436,56 @@
     background: #06b6d4;
     color: #fff;
     border-color: #06b6d4;
+  }
+
+  .counter-btn {
+    width: 24px;
+    height: 24px;
+    border: 1px solid #444;
+    background: #2a2a4e;
+    color: #888;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: bold;
+  }
+
+  .counter-btn:hover {
+    background: #3a3a5e;
+  }
+
+  .counter-btn.active {
+    background: #06b6d4;
+    color: #fff;
+    border-color: #06b6d4;
+  }
+
+  .technique-picker {
+    display: flex;
+    gap: 2px;
+  }
+
+  .technique-btn {
+    width: 20px;
+    height: 20px;
+    border: 1px solid #444;
+    background: #2a2a4e;
+    color: #666;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.65rem;
+    font-weight: bold;
+    padding: 0;
+  }
+
+  .technique-btn:hover {
+    background: #3a3a5e;
+  }
+
+  .technique-btn.active {
+    background: #0891b2;
+    color: #fff;
+    border-color: #0891b2;
   }
 
   .volume-slider {
