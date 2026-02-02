@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateChordsBundle } from '../chords';
+import { generateChordsBundle, generateChordsWithCounter } from '../chords';
 import type { ChordDegree } from '../../types/music';
 
 describe('generateChordsBundle', () => {
@@ -44,5 +44,23 @@ describe('generateChordsBundle', () => {
     // Second variation (V) should use G, B, D
     const vChordNotes = bundle.variations[1].notes.map(n => n.pitch.slice(0, -1));
     expect(vChordNotes.some(n => ['G', 'B', 'D'].includes(n))).toBe(true);
+  });
+});
+
+describe('generateChordsWithCounter', () => {
+  const params = { density: 0.5, complexity: 0.5, swing: 0, style: 'straight' as const };
+  const counterConfig = { enabled: true, technique: 'harmonic' as const };
+
+  it('returns both main and counter notes when enabled', () => {
+    const result = generateChordsWithCounter(params, 'C', 'major', 12345, 2, 'pop', counterConfig);
+    expect(result.main.length).toBeGreaterThan(0);
+    expect(result.counter).not.toBeNull();
+    expect(result.counter!.length).toBeGreaterThan(0);
+  });
+
+  it('returns null counter when disabled', () => {
+    const result = generateChordsWithCounter(params, 'C', 'major', 12345, 2, 'pop', { enabled: false, technique: 'harmonic' });
+    expect(result.main.length).toBeGreaterThan(0);
+    expect(result.counter).toBeNull();
   });
 });
