@@ -1,4 +1,4 @@
-import { SeededRandom } from './theory';
+import { SeededRandom, getNoteInScale, NOTES } from './theory';
 import type { Note, CounterMelodyTechnique } from '../types/music';
 
 // Constants
@@ -163,6 +163,19 @@ function getPitchClass(pitch: string): string {
 }
 
 /**
+ * Convert pitch string to MIDI number for comparison
+ */
+function pitchToMidi(pitch: string): number {
+  const match = pitch.match(/^([A-G]#?)(\d+)$/);
+  if (!match) return 60; // Default to C4
+  const [, noteName, octaveStr] = match;
+  const noteIndex = NOTES.indexOf(noteName);
+  if (noteIndex === -1) return 60;
+  const octave = parseInt(octaveStr, 10);
+  return (octave + 1) * 12 + noteIndex;
+}
+
+/**
  * Generate counter melody using harmonic technique (complementary chord tones)
  */
 function generateHarmonicCounter(
@@ -227,14 +240,74 @@ function generateHarmonicCounter(
 }
 
 /**
+ * Generate counter melody using contrary motion technique
+ * When main melody ascends, counter descends (and vice versa)
+ */
+function generateContraryCounter(
+  mainNotes: Note[],
+  key: string,
+  scale: string,
+  _rng: SeededRandom
+): Note[] {
+  if (mainNotes.length === 0) {
+    return [];
+  }
+
+  const counterNotes: Note[] = [];
+
+  // Extract octave from main melody (default to 5)
+  const mainOctave = parseInt(mainNotes[0].pitch.match(/\d+$/)?.[0] || '5', 10);
+
+  // Start counter at a complementary scale degree (degree 4 = the 5th note)
+  let currentDegree = 4;
+
+  for (let i = 0; i < mainNotes.length; i++) {
+    const mainNote = mainNotes[i];
+
+    if (i > 0) {
+      // Track direction of main melody movement
+      const prevMidi = pitchToMidi(mainNotes[i - 1].pitch);
+      const currMidi = pitchToMidi(mainNote.pitch);
+      const mainDirection = currMidi - prevMidi;
+
+      // Move counter in opposite direction
+      if (mainDirection > 0) {
+        // Main ascends, counter descends
+        currentDegree -= 1;
+      } else if (mainDirection < 0) {
+        // Main descends, counter ascends
+        currentDegree += 1;
+      }
+      // If mainDirection === 0, stay on same degree
+    }
+
+    // Get scale tone for current degree
+    const counterPitch = getNoteInScale(key, scale, currentDegree, mainOctave);
+
+    // Calculate velocity
+    const baseVelocity = mainNote.velocity;
+    const velocity = Math.max(MIN_VELOCITY, baseVelocity * VELOCITY_MULTIPLIER);
+
+    counterNotes.push({
+      pitch: counterPitch,
+      time: mainNote.time,
+      duration: mainNote.duration,
+      velocity,
+    });
+  }
+
+  return counterNotes;
+}
+
+/**
  * Generate a counter melody based on the main melody
  */
 export function generateCounterMelody(
   mainNotes: Note[],
   technique: CounterMelodyTechnique,
   chordTones: string[],
-  _key: string,
-  _scale: string,
+  key: string,
+  scale: string,
   seed: number
 ): Note[] {
   const rng = new SeededRandom(seed);
@@ -245,8 +318,7 @@ export function generateCounterMelody(
     case 'harmonic':
       return generateHarmonicCounter(mainNotes, chordTones, rng);
     case 'contrary':
-      // Placeholder - will be implemented in Task 4
-      return [];
+      return generateContraryCounter(mainNotes, key, scale, rng);
     default:
       return [];
   }
