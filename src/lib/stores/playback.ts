@@ -107,3 +107,6 @@ function createPadConfigStore() {
 }
 
 export const padConfig = createPadConfigStore();
+
+// Global staff view toggle
+export const globalStaffView = writable(false);

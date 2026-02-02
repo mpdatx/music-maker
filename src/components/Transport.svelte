@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { playback, isPlaying, bpm, project } from '../lib/stores';
+  import { playback, isPlaying, bpm, project, globalStaffView } from '../lib/stores';
   import { transport, initAudio, setMasterVolume } from '../lib/audio';
 
   const dispatch = createEventDispatcher<{
@@ -77,6 +77,17 @@
     <span class="icon">⏹</span>
   </button>
 
+  <button
+    class="transport-btn staff-btn"
+    class:active={$globalStaffView}
+    on:click={() => globalStaffView.update(v => !v)}
+    title="Toggle all tracks to staff view"
+  >
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/>
+    </svg>
+  </button>
+
   <div class="bpm-control">
     <input
       type="text"
@@ -134,6 +145,20 @@
   .stop-btn:hover {
     background: #f87171;
     border-color: #f87171;
+  }
+
+  .staff-btn {
+    padding: 12px;
+  }
+
+  .staff-btn svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .staff-btn.active {
+    background: #8b5cf6;
+    border-color: #8b5cf6;
   }
 
   .bpm-control {

@@ -7,7 +7,7 @@
   import { getInstrumentIcon, isSampledInstrument } from '../lib/icons';
   import { getScaleNotes, noteToMidi } from '../lib/generators/theory';
   import { SAMPLED_INSTRUMENT_RANGES } from '../lib/generators';
-  import { musicalKey, scale } from '../lib/stores';
+  import { musicalKey, scale, globalStaffView } from '../lib/stores';
 
   let {
     track,
@@ -48,8 +48,9 @@
   let showKeys = $state(false);
   let keysFlipped = $state(false);
 
-  // Staff mode toggle
-  let showStaff = $state(false);
+  // Staff mode toggle (local or global)
+  let localStaffView = $state(false);
+  let showStaff = $derived(localStaffView || $globalStaffView);
 
   function toggleKeysMode() {
     if (showKeys) {
@@ -192,12 +193,20 @@
   }
 
   function toggleStaffMode() {
-    showStaff = !showStaff;
-    if (showStaff && showKeys) {
+    localStaffView = !localStaffView;
+    if (localStaffView && showKeys) {
       showKeys = false;
       keysFlipped = false;
     }
   }
+
+  // Turn off keys mode when global staff view is enabled
+  $effect(() => {
+    if ($globalStaffView && showKeys) {
+      showKeys = false;
+      keysFlipped = false;
+    }
+  });
 
   // Get the currently active/playing loop for staff view
   let activeLoopData = $derived.by(() => {
