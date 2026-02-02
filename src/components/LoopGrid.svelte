@@ -397,11 +397,45 @@
     const track = $tracks.find(t => t.id === trackId);
     if (track) {
       project.setTrackCounterMelody(trackId, !track.counterMelody?.enabled);
+      // Regenerate if track is currently playing
+      regeneratePlayingTrack(trackId);
     }
   }
 
   function handleCounterTechniqueChange(trackId: string, technique: CounterMelodyTechnique) {
     project.setTrackCounterTechnique(trackId, technique);
+    // Regenerate if track is currently playing
+    regeneratePlayingTrack(trackId);
+  }
+
+  function regeneratePlayingTrack(trackId: string) {
+    // Find if this track has an active cell
+    const track = $tracks.find(t => t.id === trackId);
+    if (!track) return;
+
+    let activeCol: number | null = null;
+    for (const [key, state] of Object.entries(cellStates)) {
+      if (key.startsWith(`${trackId}:`) && state === 'active') {
+        activeCol = parseInt(key.split(':')[1]);
+        break;
+      }
+    }
+
+    if (activeCol === null) return;
+
+    // Get the loop seed from the active cell
+    const cell = track.cells.find(c => c.col === activeCol);
+    const loopId = cell?.loopId;
+    const existingLoop = loopId ? $loops[loopId] : null;
+    const seed = existingLoop?.seed ?? Math.floor(Math.random() * 1000000);
+
+    // Regenerate and restart with updated track state (need fresh track from store)
+    const updatedTrack = project.getSnapshot().tracks.find(t => t.id === trackId);
+    if (!updatedTrack) return;
+
+    ensureProgressionClock();
+    const bundle = generateBundleForTrack(updatedTrack, seed);
+    loopScheduler.scheduleBundleLoop(trackId, bundle, $bpm);
   }
 
   function updateSoloMuting() {
