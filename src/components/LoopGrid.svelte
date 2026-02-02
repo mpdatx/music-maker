@@ -4,7 +4,8 @@
   import { currentProgression, progressionStore } from '../lib/stores/progression';
   import { initAudio, transport, instrumentManager, loopScheduler, preloadInstruments, isSampledInstrument, ProgressionClock } from '../lib/audio';
   import { GENRE_TRACKS } from '../lib/stores/project';
-  import { generateLoop, generateLoopBundle, GENRE_PRESETS } from '../lib/generators';
+  import { generateLoop, generateLoopBundle, generateCounterMelody, GENRE_PRESETS } from '../lib/generators';
+  import { getChordTonesForDegree } from '../lib/generators/theory';
   import type { Track, LoopState, GenrePreset, InstrumentType, LoopBundle, CounterMelodyTechnique } from '../lib/types';
   import TrackRow from './TrackRow.svelte';
   import LoopEditorModal from './LoopEditorModal.svelte';
@@ -175,7 +176,7 @@
     const progression = $currentProgression;
     const actualSeed = seed ?? Math.floor(Math.random() * 1000000);
 
-    return generateLoopBundle(
+    const bundle = generateLoopBundle(
       track.type,
       GENRE_PRESETS[$genre].defaultParams,
       projectData.key,
@@ -185,6 +186,32 @@
       progression.id,
       2 // bars per variation
     );
+
+    // Add counter-melody notes if enabled for this track
+    if (track.counterMelody?.enabled && (track.type === 'lead' || track.type === 'keys')) {
+      const technique = track.counterMelody.technique;
+
+      // Process each variation to add counter-melody
+      for (const variation of bundle.variations) {
+        const chord = progression.chords[variation.chordIndex] ?? 'I';
+        const octave = track.type === 'lead' ? 5 : 4;
+        const chordTones = getChordTonesForDegree(chord, projectData.key, projectData.scale, octave);
+
+        const counterNotes = generateCounterMelody(
+          variation.notes,
+          technique,
+          chordTones,
+          projectData.key,
+          projectData.scale,
+          actualSeed + variation.chordIndex * 100
+        );
+
+        // Add counter notes to the same variation
+        variation.notes = [...variation.notes, ...counterNotes];
+      }
+    }
+
+    return bundle;
   }
 
   async function handleCellTap(e: CustomEvent<{ trackId: string; col: number }>) {
