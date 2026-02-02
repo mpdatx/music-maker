@@ -466,20 +466,29 @@
 
   .technique-picker {
     display: flex;
-    gap: 2px;
   }
 
   .technique-btn {
-    width: 20px;
+    width: 16px;
     height: 20px;
     border: 1px solid #444;
+    border-right: none;
     background: #2a2a4e;
     color: #666;
-    border-radius: 3px;
+    border-radius: 0;
     cursor: pointer;
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     font-weight: bold;
     padding: 0;
+  }
+
+  .technique-btn:first-child {
+    border-radius: 3px 0 0 3px;
+  }
+
+  .technique-btn:last-child {
+    border-right: 1px solid #444;
+    border-radius: 0 3px 3px 0;
   }
 
   .technique-btn:hover {
@@ -490,6 +499,10 @@
     background: #0891b2;
     color: #fff;
     border-color: #0891b2;
+  }
+
+  .technique-btn.active + .technique-btn {
+    border-left-color: #0891b2;
   }
 
   .volume-slider {
