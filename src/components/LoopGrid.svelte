@@ -5,7 +5,7 @@
   import { initAudio, transport, instrumentManager, loopScheduler, preloadInstruments, isSampledInstrument, ProgressionClock } from '../lib/audio';
   import { GENRE_TRACKS } from '../lib/stores/project';
   import { generateLoop, generateLoopBundle, GENRE_PRESETS } from '../lib/generators';
-  import type { Track, LoopState, GenrePreset, InstrumentType, LoopBundle } from '../lib/types';
+  import type { Track, LoopState, GenrePreset, InstrumentType, LoopBundle, CounterMelodyTechnique } from '../lib/types';
   import TrackRow from './TrackRow.svelte';
   import LoopEditorModal from './LoopEditorModal.svelte';
 
@@ -356,6 +356,17 @@
     instrumentManager.setTrackVolume(e.detail.trackId, e.detail.volume);
   }
 
+  function handleCounterToggle(trackId: string) {
+    const track = $tracks.find(t => t.id === trackId);
+    if (track) {
+      project.setTrackCounterMelody(trackId, !track.counterMelody?.enabled);
+    }
+  }
+
+  function handleCounterTechniqueChange(trackId: string, technique: CounterMelodyTechnique) {
+    project.setTrackCounterTechnique(trackId, technique);
+  }
+
   function updateSoloMuting() {
     const trackList = $tracks;
     const anySoloed = trackList.some(t => t.solo);
@@ -514,6 +525,8 @@
       peakDb={trackMaxDb[track.id] ?? -Infinity}
       onNotePress={handleNotePress}
       onNoteRelease={handleNoteRelease}
+      onCounterToggle={handleCounterToggle}
+      onCounterTechniqueChange={handleCounterTechniqueChange}
       on:cellTap={handleCellTap}
       on:cellDoubleTap={handleCellDoubleTap}
       on:cellContextMenu={handleCellContextMenu}
