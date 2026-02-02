@@ -1,0 +1,53 @@
+import { describe, it, expect } from 'vitest';
+import { generateCounterMelody } from '../counterMelody';
+import type { Note } from '../../types/music';
+
+describe('generateCounterMelody', () => {
+  const chordTones = ['C4', 'E4', 'G4'];
+
+  describe('rhythmic technique', () => {
+    it('generates notes in gaps between main melody notes', () => {
+      const mainNotes: Note[] = [
+        { pitch: 'C5', time: '0:0:0', duration: '4n', velocity: 0.8 },
+        { pitch: 'E5', time: '0:2:0', duration: '4n', velocity: 0.8 },
+      ];
+      const counter = generateCounterMelody(mainNotes, 'rhythmic', chordTones, 'C', 'major', 12345);
+      expect(counter.length).toBeGreaterThan(0);
+      // Counter notes should NOT be at the same times as main notes
+      const counterTimes = counter.map(n => n.time);
+      expect(counterTimes).not.toContain('0:0:0');
+      expect(counterTimes).not.toContain('0:2:0');
+    });
+
+    it('uses chord tones for counter melody', () => {
+      const mainNotes: Note[] = [
+        { pitch: 'C5', time: '0:0:0', duration: '8n', velocity: 0.8 },
+      ];
+      const counter = generateCounterMelody(mainNotes, 'rhythmic', chordTones, 'C', 'major', 12345);
+      for (const note of counter) {
+        const pitchClass = note.pitch.replace(/\d+/, '');
+        expect(['C', 'E', 'G']).toContain(pitchClass);
+      }
+    });
+
+    it('reduces velocity by 50%', () => {
+      const mainNotes: Note[] = [
+        { pitch: 'C5', time: '0:0:0', duration: '4n', velocity: 0.8 },
+      ];
+      const counter = generateCounterMelody(mainNotes, 'rhythmic', chordTones, 'C', 'major', 12345);
+      for (const note of counter) {
+        expect(note.velocity).toBeLessThanOrEqual(0.5);
+        expect(note.velocity).toBeGreaterThanOrEqual(0.2);
+      }
+    });
+
+    it('is reproducible with same seed', () => {
+      const mainNotes: Note[] = [
+        { pitch: 'C5', time: '0:0:0', duration: '4n', velocity: 0.8 },
+      ];
+      const c1 = generateCounterMelody(mainNotes, 'rhythmic', chordTones, 'C', 'major', 12345);
+      const c2 = generateCounterMelody(mainNotes, 'rhythmic', chordTones, 'C', 'major', 12345);
+      expect(c1).toEqual(c2);
+    });
+  });
+});
